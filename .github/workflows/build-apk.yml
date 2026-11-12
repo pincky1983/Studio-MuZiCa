@@ -25,20 +25,31 @@ jobs:
 
       - name: Pregătește proiectul Capacitor și Pictograma
         run: |
-          rm -rf android www
+          # Șterge complet orice structură nativă anterioară blocată în cache
+          rm -rf android www assets
+          
+          # Reconstruiește folderul public web curat
           mkdir www
           cp -r * www/ 2>/dev/null || true
           rm -rf www/www www/.github
+          
+          # Inițializează dependințele npm
           npm init -y
           npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/assets
+          
+          # Generează structura nativă Android de la zero
           npx cap init "Studio Muzical AI" "com.pincky.studiomuzica" --web-dir=www
           npx cap add android
+          
+          # Generare corectă straturi pictograme adaptive Android
           if [ -f "icon.png" ]; then
             mkdir -p assets
             cp icon.png assets/icon-only.png
             cp icon.png assets/icon-foreground.png
             npx capacitor-assets generate --android --iconBackgroundColor '#121212' --splashBackgroundColor '#121212'
           fi
+          
+          # Sincronizează activele generate în folderul nativ
           npx cap sync
 
       - name: Compilează fișierul APK
@@ -52,6 +63,3 @@ jobs:
         with:
           name: Studio-Muzical-AI-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
-          
-          
