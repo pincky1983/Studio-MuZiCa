@@ -51,6 +51,10 @@ jobs:
           
           # Sincronizează activele în folderul nativ Android
           npx cap sync
+          mkdir -p android/app/src/main/res/values
+          echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="ic_launcher_background">#121212</color></resources>' > android/app/src/main/res/values/colors.xml
+          sed -i 's/@mipmap\/ic_launcher_background/@color\/ic_launcher_background/g' android/app/src/main/res/mipmap-anydpi-v26/*.xml
+
 
       - name: Compilează fișierul APK
         run: |
