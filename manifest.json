@@ -1,16 +1,22 @@
 {
   "name": "Studio Muzical AI",
   "short_name": "StudioMuzica",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/Studio-MuZiCa/index.html",
+  "scope": "/Studio-MuZiCa/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#1db954",
   "icons": [
     {
-      "src": "./icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "src": "https://gstatic.com",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://gstatic.com",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
