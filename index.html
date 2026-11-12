@@ -191,11 +191,20 @@
   </div>
 
   <script src="app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
+    <script>
+    setTimeout(() => {
+      const splash = document.getElementById('splash-screen');
+      if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 500);
+      }
+    }, 1500);
+
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http') && window.location.hostname !== 'localhost') {
       navigator.serviceWorker.register('./sw.js');
     }
   </script>
+
 </body>
 </html>
 
