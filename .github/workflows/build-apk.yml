@@ -17,18 +17,18 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Configurează Java 21
+      - name: Configurează Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
       - name: Pregătește proiectul Capacitor
         run: |
           mkdir www
           cp *.html *.css *.js *.json *.svg www/ 2>/dev/null || true
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0
           npx cap init "Studio Muzical AI" "com.pincky.studiomuzica" --web-dir=www
           echo '{"appId":"com.pincky.studiomuzica","appName":"Studio Muzical AI","webDir":"www","server":{"url":"https://github.io","cleartext":true}}' > capacitor.config.json
           npx cap add android
