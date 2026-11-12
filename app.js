@@ -182,7 +182,7 @@ async function processFileWithAI(event) {
         contents: [{
           parts: [
             {
-              text: "Ești un expert în recunoaștere optică muzicală (OMR). Analizează acest document sau imagine cu o partitură muzicală și transcrie melodia principală în format standard ABC notation. Returnează DOAR codul ABC brut, fără explicații, fără blocuri markdown (fără ```abc). Asigură-te că include antetele X:1, M: (măsura), L:1/8, K: (gama) și notele."
+              text: "Ești un expert în recunoaștere optică muzicală (OMR). Analizează acest document sau imagine cu o partitură muzicală și transcrie melodia principală în format standard ABC notation. Returnează DOAR codul ABC brut, fără explicații, fără blocuri markdown (fără ). Asigură-te că include antetele X:1, M: (măsura), L:1/8, K: (gama) și notele."
             },
             {
               inline_data: {
@@ -204,7 +204,8 @@ async function processFileWithAI(event) {
     }
 
     let rawAbc = data.candidates.at(0).content.parts.at(0).text;
-    lastScannedAbc = rawAbc.replace(/```abc/g, '').replace(/```/g, '').trim();
+        lastScannedAbc = rawAbc.replace(/\x60\x60\x60abc/g, '').replace(/\x60\x60\x60/g, '').trim();
+
 
     statusEl.innerText = "✅ Partitură citită cu succes! Poți schimba instrumentul mai sus.";
     document.getElementById('scan-sheet-container').style.display = 'block';
@@ -405,12 +406,13 @@ function renderSavedScoresList() {
     container.innerHTML = '<p style="color:#888; font-size:13px;">Nicio partitură salvată încă.</p>';
     return;
   }
-  container.innerHTML = saved.map(item => `
-    <div style="display:flex; justify-content:space-between; align-items:center; background:#1e1e1e; padding:10px 12px; border-radius:8px; border:1px solid #333;">
-      <span onclick="loadSavedScore(${item.id})" style="cursor:pointer; flex:1; font-weight:500;">🎵 ${item.name}</span>
-      <button onclick="deleteSavedScore(${item.id})" style="background:transparent; border:none; color:#ff5555; font-size:16px; cursor:pointer; padding:4px 8px;">🗑️</button>
-    </div>
-  `).join('');
+    container.innerHTML = saved.map(function(item) {
+    return '<div style="display:flex; justify-content:space-between; align-items:center; background:#1e1e1e; padding:10px 12px; border-radius:8px; border:1px solid #333;">' +
+      '<span onclick="loadSavedScore(' + item.id + ')" style="cursor:pointer; flex:1; font-weight:500;">🎵 ' + item.name + '</span>' +
+      '<button onclick="deleteSavedScore(' + item.id + ')" style="background:transparent; border:none; color:#ff5555; font-size:16px; cursor:pointer; padding:4px 8px;">🗑️</button>' +
+    '</div>';
+  }).join('');
+
 }
 
 function loadSavedScore(id) {
@@ -441,9 +443,11 @@ function changePlaybackTempo(percent) {
   const baseBpm = 100;
   const newBpm = Math.round((baseBpm * percent) / 100);
   if (/^Q:/m.test(lastScannedAbc)) {
-    lastScannedAbc = lastScannedAbc.replace(/^Q:.*$/m, `Q:1/4=${newBpm}`);
+        lastScannedAbc = lastScannedAbc.replace(/^Q:.*$/m, 'Q:1/4=' + newBpm);
+
   } else {
-    lastScannedAbc = `Q:1/4=${newBpm}\n` + lastScannedAbc;
+        lastScannedAbc = 'Q:1/4=' + newBpm + '\n' + lastScannedAbc;
+
   }
   renderScannedMusic();
 }
