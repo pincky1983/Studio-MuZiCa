@@ -34,9 +34,8 @@ jobs:
           npx cap add android
           if [ -f "icon.png" ]; then
             mkdir -p assets
-            cp icon.png assets/icon-only.png
-            cp icon.png assets/icon-foreground.png
-            npx capacitor-assets generate --android --iconBackgroundColor '#121212' --splashBackgroundColor '#121212'
+            cp icon.png assets/icon.png
+            npx capacitor-assets generate --android --icon
           fi
           npx cap sync
 
@@ -51,4 +50,4 @@ jobs:
         with:
           name: Studio-Muzical-AI-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
+          
