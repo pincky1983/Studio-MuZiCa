@@ -25,6 +25,7 @@ jobs:
 
       - name: Pregătește proiectul Capacitor și Pictograma
         run: |
+          rm -rf android www
           mkdir www
           cp -r * www/ 2>/dev/null || true
           rm -rf www/www www/.github
@@ -51,5 +52,6 @@ jobs:
         with:
           name: Studio-Muzical-AI-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
           
           
