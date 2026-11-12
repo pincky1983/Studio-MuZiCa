@@ -185,13 +185,13 @@ function renderAndPlay(abcString, paperId, audioContainerId, midiProgram, transp
       audioContext: audioContext,
       visualObj: visualObj[0],
       options: {
-        soundFontUrl: "./soundfonts/",
+        soundFontUrl: "./sfx/",
         program: midiProgram,
         midiTranspose: transposeSemitones
       }
     }).then(() => {
       synthControl.setTune(visualObj[0], false, {
-        soundFontUrl: "./soundfonts/",
+        soundFontUrl: "./sfx/",
         program: midiProgram,
         midiTranspose: transposeSemitones
       });
