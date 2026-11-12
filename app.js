@@ -230,3 +230,67 @@ function fileToBase64(file) {
     reader.onerror = error => reject(error);
   });
 }
+window.addEventListener('load', () => {
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    setTimeout(() => {
+      splash.classList.add('fade-out');
+    }, 1200);
+  }
+});
+// Control Volum Global
+let masterVolume = parseFloat(localStorage.getItem('studio_volume') ?? 0.8);
+
+// Interceptează Web Audio API (metronom, acordor, sintetizator abcjs) pentru a aplica volumul
+(function() {
+  const OriginalAudioContext = window.AudioContext || window.webkitAudioContext;
+  if (OriginalAudioContext) {
+    window.appGainNodes = [];
+    const origConnect = AudioNode.prototype.connect;
+    AudioNode.prototype.connect = function(destination, ...args) {
+      if (destination && destination.context && destination === destination.context.destination) {
+        if (!this._masterGainAttached) {
+          const gainNode = destination.context.createGain();
+          gainNode.gain.value = masterVolume;
+          window.appGainNodes.push(gainNode);
+          this._masterGainAttached = true;
+          origConnect.call(this, gainNode);
+          return origConnect.call(gainNode, destination, ...args);
+        }
+      }
+      return origConnect.apply(this, [destination, ...args]);
+    };
+  }
+})();
+
+function updateMasterVolume(val) {
+  masterVolume = val / 100;
+  localStorage.setItem('studio_volume', masterVolume);
+
+  const volValue = document.getElementById('vol-value');
+  const volIcon = document.getElementById('vol-icon');
+  if (volValue) volValue.textContent = val + '%';
+  if (volIcon) volIcon.textContent = val == 0 ? '🔇' : (val < 50 ? '🔉' : '🔊');
+
+  // Actualizează toate nodurile audio active
+  if (window.appGainNodes) {
+    window.appGainNodes.forEach(g => {
+      try { g.gain.value = masterVolume; } catch (e) {}
+    });
+  }
+
+  // Actualizează eventuale elemente HTML <audio>
+  document.querySelectorAll('audio').forEach(el => {
+    el.volume = masterVolume;
+  });
+}
+
+// Aplică volumul salvat la deschiderea aplicației
+window.addEventListener('DOMContentLoaded', () => {
+  const savedPercent = Math.round(masterVolume * 100);
+  const slider = document.getElementById('master-volume');
+  if (slider) {
+    slider.value = savedPercent;
+    updateMasterVolume(savedPercent);
+  }
+});

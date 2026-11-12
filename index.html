@@ -10,7 +10,16 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/abcjs@6.4.4/abcjs-audio.css">
 
 </head>
-<body>
+<body>  <!-- ECRAN DE PORNIRE ANIMAT (SPLASH SCREEN) -->
+  <div id="splash-screen">
+    <div class="splash-content">
+      <div class="splash-icon">🎵</div>
+      <h1>Studio Muzical AI</h1>
+      <p>Se pregătește studioul...</p>
+      <div class="splash-loader"></div>
+    </div>
+  </div>
+
 
   <!-- ECRAN 1: MENIU PRINCIPAL -->
   <div id="home-screen" class="screen active">
@@ -18,7 +27,13 @@
       <h1>Studio Muzical</h1>
       <p>Generator & Transpunere AI</p>
     </header>
-    
+        <!-- CONTROL VOLUM GLOBAL -->
+    <div class="volume-control">
+      <span id="vol-icon">🔊</span>
+      <input type="range" id="master-volume" min="0" max="100" value="80" oninput="updateMasterVolume(this.value)">
+      <span id="vol-value">80%</span>
+    </div>
+
     <div class="grid-menu">
       <button class="menu-card jazz" onclick="openGenerator('jazz')">
         <span class="icon">🎷</span>

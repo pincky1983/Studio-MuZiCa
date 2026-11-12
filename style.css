@@ -1,3 +1,6 @@
+button, label, select, input {
+  touch-action: manipulation;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 body { background-color: #121212; color: #ffffff; padding: 15px; }
 .screen { display: none; }
@@ -46,3 +49,101 @@ select, input[type="password"] {
 
 .status-msg { text-align: center; margin: 15px 0; font-size: 14px; color: #1db954; font-weight: bold; }
 .abcjs-highlight { fill: #1db954 !important; }
+/* Ecran de pornire animat */
+#splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #121212;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#splash-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.splash-content {
+  text-align: center;
+}
+
+.splash-icon {
+  font-size: 64px;
+  margin-bottom: 15px;
+  display: inline-block;
+  animation: pulseMusic 1.2s infinite ease-in-out;
+}
+
+.splash-content h1 {
+  color: #1db954;
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.splash-content p {
+  color: #b3b3b3;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.splash-loader {
+  width: 140px;
+  height: 4px;
+  background-color: #282828;
+  border-radius: 4px;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.splash-loader::after {
+  content: "";
+  position: absolute;
+  left: -50%;
+  width: 50%;
+  height: 100%;
+  background-color: #1db954;
+  border-radius: 4px;
+  animation: loadingBar 1.2s infinite ease-in-out;
+}
+@keyframes pulseMusic {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+@keyframes loadingBar {
+  0% { left: -50%; }
+  100% { left: 100%; }
+}
+/* Control volum global */
+.volume-control {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.volume-control input[type="range"] {
+  flex: 1;
+  accent-color: #1db954;
+  height: 6px;
+  cursor: pointer;
+}
+
+#vol-value {
+  font-size: 14px;
+  font-weight: bold;
+  color: #1db954;
+  min-width: 40px;
+  text-align: right;
+}
