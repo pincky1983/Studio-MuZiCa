@@ -458,5 +458,5 @@ renderScannedMusic = function() {
   const tempoBox = document.getElementById('tempo-control-box');
   if (tempoBox) tempoBox.style.display = 'block';
 };
-
-window.addEventListener('DOMContentLoaded', renderSavedScoresList);
+}
+window.addEventListener('DOMContentLoaded', renderSavedScoresList); 
