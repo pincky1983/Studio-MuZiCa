@@ -248,38 +248,120 @@ const patterns = {
 const keyOffsets = {
   "C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "Bb": 10, "Eb": 3
 };
+const improvScales = {
+  blues: {
+    notes: ["C", "_E", "F", "^F", "G", "_B", "c", "_e", "f", "^f", "g", "_b", "c'"],
+    chords: ['"Cm7"', '"Fm7"', '"Cm7"', '"G7#9"']
+  },
+  dorian: {
+    notes: ["D", "E", "F", "G", "A", "B", "c", "d", "e", "f", "g", "a", "b", "c'"],
+    chords: ['"Dm7"', '"G7"', '"Dm7"', '"Em7 A7"']
+  },
+  mixolydian: {
+    notes: ["G", "A", "B", "c", "d", "e", "f", "g", "a", "b", "c'", "d'"],
+    chords: ['"G7"', '"C7"', '"G7"', '"Dm7 G7"']
+  },
+  hijaz: {
+    notes: ["E", "F", "^G", "A", "B", "c", "d", "e", "f", "^g", "a", "b", "c'"],
+    chords: ['"E"', '"Fm"', '"E"', '"Dm E"']
+  },
+  harmonic_minor: {
+    notes: ["A,", "B,", "C", "D", "E", "F", "^G", "A", "B", "c", "d", "e", "f", "^g", "a"],
+    chords: ['"Am"', '"Dm"', '"E7"', '"Am"']
+  },
+  lydian: {
+    notes: ["C", "D", "E", "^F", "G", "A", "B", "c", "d", "e", "^f", "g", "a", "b", "c'"],
+    chords: ['"Cmaj7"', '"D/C"', '"Bm7"', '"Cmaj7"']
+  }
+};
+
+function buildImprovisationAbc(barsCount, timeSig) {
+  const scaleKey = document.getElementById('improv-scale')?.value || 'blues';
+  const vibe = document.getElementById('improv-vibe')?.value || 'melodic';
+  const scaleObj = improvScales[scaleKey] || improvScales.blues;
+  const notes = scaleObj.notes;
+  const chords = scaleObj.chords;
+
+  const eighthsPerBar = timeSig === "3/4" ? 6 : (timeSig === "2/4" ? 4 : (timeSig === "6/8" ? 6 : 8));
+  let idx = Math.floor(notes.length / 2);
+  let resultBars = [];
+
+  for (let b = 0; b < barsCount; b++) {
+    let remaining = eighthsPerBar;
+    let barStr = chords[b % chords.length] + " ";
+
+    while (remaining > 0) {
+      const step = Math.floor(Math.random() * 5) - 2;
+      idx = Math.max(0, Math.min(notes.length - 1, idx + step));
+      const n1 = notes[idx];
+      const n2 = notes[Math.min(notes.length - 1, idx + 1)];
+      const n3 = notes[Math.max(0, idx - 1)];
+
+      if (vibe === 'virtuoso' && remaining >= 2 && Math.random() < 0.65) {
+        barStr += `(3${n1}${n2}${n3} `;
+        remaining -= 2;
+      } else if (vibe === 'bebop' && remaining >= 2 && Math.random() < 0.4) {
+        barStr += `z1 ${n1}1 `;
+        remaining -= 2;
+      } else if (vibe === 'melodic' && remaining >= 4 && Math.random() < 0.45) {
+        barStr += `${n1}4 `;
+        remaining -= 4;
+      } else if (remaining >= 2 && Math.random() < 0.6) {
+        barStr += `${n1}2 `;
+        remaining -= 2;
+      } else {
+        barStr += `${n1}1 `;
+        remaining -= 1;
+      }
+    }
+    resultBars.push(barStr.trim());
+  }
+
+  return resultBars.join(' | ') + ' |]';
+}
+
 function generateMusic() {
   const timeSig = document.getElementById('time-sig').value;
   const barsCount = parseInt(document.getElementById('bars-count').value);
   const keySig = document.getElementById('key-sig').value;
   const instKey = document.getElementById('instrument').value;
-  const styleEl = document.getElementById('rhythm-style');
-  const rhythmStyle = styleEl ? styleEl.value : 'all';
   const inst = instrumentConfig[instKey];
 
-  const genrePatterns = patterns[currentGenre][timeSig] || patterns[currentGenre]["4/4"];
-  let filteredPatterns = genrePatterns;
+  let selectedMusic = "";
+  let titleLabel = `${currentGenre.toUpperCase()} - ${inst.name} (Gama: ${keySig})`;
 
-  if (rhythmStyle !== 'all') {
-    const byType = genrePatterns.filter(p => p.type === rhythmStyle);
-    if (byType.length > 0) filteredPatterns = byType;
+  if (currentGenre === 'improvizatie') {
+    selectedMusic = buildImprovisationAbc(barsCount, timeSig);
+    const scaleSel = document.getElementById('improv-scale');
+    const scaleName = scaleSel ? scaleSel.options[scaleSel.selectedIndex].text : '';
+    titleLabel = `SOLO ${scaleName} - ${inst.name} (${keySig})`;
+  } else {
+    const styleEl = document.getElementById('rhythm-style');
+    const rhythmStyle = styleEl ? styleEl.value : 'all';
+    const genrePatterns = patterns[currentGenre][timeSig] || patterns[currentGenre]["4/4"];
+    let filteredPatterns = genrePatterns;
+
+    if (rhythmStyle !== 'all') {
+      const byType = genrePatterns.filter(p => p.type === rhythmStyle);
+      if (byType.length > 0) filteredPatterns = byType;
+    }
+
+    const chosenObj = filteredPatterns[Math.floor(Math.random() * filteredPatterns.length)];
+    const rawPattern = chosenObj.abc;
+
+    let measures = rawPattern.split('|').filter(m => m.trim() !== '');
+    while (measures.length < barsCount) {
+      const shuffled = [...measures].sort(() => Math.random() - 0.3);
+      measures = measures.concat(shuffled);
+    }
+    selectedMusic = measures.slice(0, barsCount).join(' | ') + ' |]';
   }
 
-  const chosenObj = filteredPatterns[Math.floor(Math.random() * filteredPatterns.length)];
-  const rawPattern = chosenObj.abc;
-
-  let measures = rawPattern.split('|').filter(m => m.trim() !== '');
-  while (measures.length < barsCount) {
-    // La repetare, amestecăm ușor ordinea măsurilor interioare pentru variație
-    const shuffled = [...measures].sort(() => Math.random() - 0.3);
-    measures = measures.concat(shuffled);
-  }
-  const selectedMusic = measures.slice(0, barsCount).join(' | ') + ' |]';
   const totalTranspose = keyOffsets[keySig] + inst.transpose;
 
   const abcString = `
 X: 1
-T: ${currentGenre.toUpperCase()} - ${inst.name} (Gama: ${keySig})
+T: ${titleLabel}
 M: ${timeSig}
 L: 1/8
 K: C
