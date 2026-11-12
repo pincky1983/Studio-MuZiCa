@@ -134,12 +134,12 @@
 
       <label class="file-btn">
         📷 Fă o poză / Încarcă Imagine
-        <input type="file" accept="image/*" capture="environment" onchange="processFileWithAI(event)" hidden>
+        <input type="file" accept="image/*" onchange="processFileWithAI(event)" hidden>
       </label>
 
       <label class="file-btn">
         📂 Încarcă Partitură PDF
-        <input type="file" accept="application/pdf" onchange="processFileWithAI(event)" hidden>
+        <input type="file" accept=".pdf,application/pdf,*/*" onchange="processFileWithAI(event)" hidden>
       </label>
     </div>
 
