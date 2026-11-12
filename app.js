@@ -175,7 +175,7 @@ async function processFileWithAI(event) {
 
   try {
     const base64Data = await fileToBase64(file);
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
        method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -204,7 +204,8 @@ async function processFileWithAI(event) {
     }
 
     let rawAbc = data.candidates.at(0).content.parts.at(0).text;
-        lastScannedAbc = rawAbc.replace(/\x60\x60\x60abc/g, '').replace(/\x60\x60\x60/g, '').trim();
+       lastScannedAbc = rawAbc.replaceAll(String.fromCharCode(96).repeat(3) + 'abc', '').replaceAll(String.fromCharCode(96).repeat(3), '').trim();
+
 
 
     statusEl.innerText = "✅ Partitură citită cu succes! Poți schimba instrumentul mai sus.";
@@ -458,5 +459,4 @@ renderScannedMusic = function() {
   const tempoBox = document.getElementById('tempo-control-box');
   if (tempoBox) tempoBox.style.display = 'block';
 };
-}
 window.addEventListener('DOMContentLoaded', renderSavedScoresList); 
