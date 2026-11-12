@@ -52,6 +52,29 @@
         <h2>Gospel</h2>
         <p>Modulații & Pasaje</p>
       </button>
+        <button class="menu-card balada" onclick="openGenerator('balada')">
+          <span class="icon">🎹</span>
+          <h2>Baladă</h2>
+          <p>Armonii lirice & arpegii calde</p>
+        </button>
+
+        <button class="menu-card clasic" onclick="openGenerator('clasic')">
+          <span class="icon">🎻</span>
+          <h2>Clasic</h2>
+          <p>Cadențe & pasaje melodice</p>
+        </button>
+
+        <button class="menu-card lautaresc" onclick="openGenerator('lautaresc')">
+          <span class="icon">🪗</span>
+          <h2>Lăutăresc</h2>
+          <p>Mod Hijaz, triolete & ornamentații</p>
+        </button>
+
+        <button class="menu-card folclor" onclick="openGenerator('folclor')">
+          <span class="icon">🪈</span>
+          <h2>Folclor</h2>
+          <p>Horă, Sârbă (triolete) & Doine</p>
+        </button>
 
       <button class="menu-card scanner" onclick="openScanner()">
         <span class="icon">📷</span>
@@ -103,6 +126,14 @@
       </div>
 
       <div class="control-group">
+                <label for="rhythm-style">Stil Ritmic & Variații:</label>
+        <select id="rhythm-style">
+          <option value="all">🎲 Toate (Aleatoriu: Progresii + Triolete)</option>
+          <option value="normal">🎵 Progresii Clasice (Pătrimi / Optimi)</option>
+          <option value="triplets">🎶 Triolete & Swing (3/2)</option>
+          <option value="arpeggios">🎹 Arpegii & Pasaje Rapide</option>
+          <option value="syncopated">⚡ Sincopat & Cromatisme</option>
+        </select>
         <label>Instrument:</label>
                 <select id="instrument">
           <optgroup label="Clape & Acordeon">

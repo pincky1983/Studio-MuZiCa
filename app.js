@@ -78,56 +78,201 @@ function switchScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-
 const patterns = {
   jazz: {
     "4/4": [
-      "D2 F2 A2 c2 | B2 G2 F2 D2 | E2 G2 B2 d2 | c4 z4 |",
-      "c2 B2 A2 G2 | ^F2 G2 A2 ^A2 | B2 d2 g2 f2 | e4 z4 |",
-      "_E2 G2 _B2 d2 | _A2 c2 _e2 g2 | D2 F2 A2 c2 | G2 B2 d2 f2 |"
+      // Clasice & II-V-I
+      { type: "normal", abc: "D2 F2 A2 c2 | B2 G2 F2 D2 | E2 G2 B2 d2 | c4 z4 |" },
+      { type: "normal", abc: "c2 B2 A2 G2 | ^F2 G2 A2 ^A2 | B2 d2 g2 f2 | e4 z4 |" },
+      { type: "normal", abc: "_E2 G2 _B2 d2 | _A2 c2 _e2 g2 | D2 F2 A2 c2 | G2 B2 d2 f2 |" },
+      // Triolete & Swing
+      { type: "triplets", abc: "(3D2F2A2 (3c2B2A2 | (3G2B2d2 (3f2e2d2 | (3E2G2B2 (3d2c2B2 | c4 z4 |" },
+      { type: "triplets", abc: "(3cBA (3GFE D2 F2 | (3GAB (3def g2 f2 | (3edc (3BAG F2 D2 | C4 z4 |" },
+      // Arpegii & Bebop
+      { type: "arpeggios", abc: "D2 FA cB AG | G2 Bd fe dc | E2 GB dc BA | c2 eg c'4 |" },
+      // Sincopat & Cromatisme
+      { type: "syncopated", abc: "D2 z F A2 c2 | z B G2 F2 D2 | _E2 z G _B2 d2 | C4 z4 |" }
     ],
-    "3/4": ["D2 F2 A2 | G2 B2 d2 | c2 e2 g2 | c6 |"],
-    "2/4": ["D2 F2 | G2 B2 | c2 e2 | c4 |"],
-    "6/8": ["D2F A2c | B2G F2D | E2G B2d | c6 |"]
+    "3/4": [
+      { type: "normal", abc: "D2 F2 A2 | G2 B2 d2 | c2 e2 g2 | c6 |" },
+      { type: "triplets", abc: "(3DFA c2 A2 | (3GBd f2 d2 | (3ceg b2 g2 | c'6 |" }
+    ],
+    "2/4": [
+      { type: "normal", abc: "D2 F2 | G2 B2 | c2 e2 | c4 |" },
+      { type: "triplets", abc: "(3DFA (3cBA | (3GBd (3fed | (3ceg (3bag | c'4 |" }
+    ],
+    "6/8": [
+      { type: "normal", abc: "D2F A2c | B2G F2D | E2G B2d | c6 |" },
+      { type: "arpeggios", abc: "DFA cBA | GBd fed | EGB dcB | ceg c'3 |" }
+    ]
   },
   blues: {
     "4/4": [
-      "C2 _E2 F2 ^F2 | G2 _B2 c2 _E2 | F2 _A2 B2 d2 | c4 z4 |",
-      "c2 _B2 G2 F2 | _E2 C2 _B,2 C2 | G2 F2 _E2 C2 | C4 z4 |"
+      { type: "normal", abc: "C2 _E2 F2 ^F2 | G2 _B2 c2 _E2 | F2 _A2 B2 d2 | c4 z4 |" },
+      { type: "normal", abc: "c2 _B2 G2 F2 | _E2 C2 _B,2 C2 | G2 F2 _E2 C2 | C4 z4 |" },
+      // Triolete Blues Shuffle
+      { type: "triplets", abc: "(3C2_E2G2 (3_B2G2_E2 | (3F2_A2c2 (3_e2c2_A2 | (3G2_B2d2 (3f2_e2c2 | C4 z4 |" },
+      { type: "triplets", abc: "(3c_BG (3F_EC _B,2 C2 | (3F_Ac (3_ec_A F4 | (3G_Bd (3f_d_B G4 | C4 z4 |" },
+      // Arpegii & Pasaje
+      { type: "arpeggios", abc: "C_E G_B c_B G_E | F_A c_e f_e c_A | G_B df g_e c_B | c4 z4 |" },
+      // Sincopat
+      { type: "syncopated", abc: "C2 z _E F2 ^F2 | z G _B2 c2 _E2 | G2 z F _E2 C2 | C4 z4 |" }
     ],
-    "3/4": ["C2 _E2 F2 | ^F2 G2 _B2 | c2 _B2 G2 | C6 |"],
-    "2/4": ["C2 _E2 | F2 ^F2 | G2 _B2 | c4 |"],
-    "6/8": ["C2_E F2^F | G2_B c2_B | G2F _E2C | C6 |"]
+    "3/4": [
+      { type: "normal", abc: "C2 _E2 F2 | ^F2 G2 _B2 | c2 _B2 G2 | C6 |" },
+      { type: "triplets", abc: "(3C_EG _B2 G2 | (3F_Ac _e2 c2 | (3G_Bd f2 d2 | c6 |" }
+    ],
+    "2/4": [
+      { type: "normal", abc: "C2 _E2 | F2 ^F2 | G2 _B2 | c4 |" },
+      { type: "triplets", abc: "(3C_EG (3_BG_E | (3F_Ac (3_ec_A | (3G_Bd (3f_d_B | c4 |" }
+    ],
+    "6/8": [
+      { type: "normal", abc: "C2_E F2^F | G2_B c2_B | G2F _E2C | C6 |" },
+      { type: "arpeggios", abc: "C_EG _BG_E | F_Ac _ec_A | G_Bd fd_B | c6 |" }
+    ]
   },
   gospel: {
     "4/4": [
-      "C2 D2 E2 G2 | A2 c2 d2 e2 | f2 d2 B2 G2 | c4 z4 |",
-      "E2 G2 c2 e2 | F2 A2 d2 f2 | ^F2 A2 c2 ^d2 | G2 B2 d2 g2 |"
+      { type: "normal", abc: "C2 D2 E2 G2 | A2 c2 d2 e2 | f2 d2 B2 G2 | c4 z4 |" },
+      { type: "normal", abc: "E2 G2 c2 e2 | F2 A2 d2 f2 | ^F2 A2 c2 ^d2 | G2 B2 d2 g2 |" },
+      // Triolete Gospel
+      { type: "triplets", abc: "(3C2E2G2 (3c2B2A2 | (3F2A2c2 (3f2e2d2 | (3G2B2d2 (3g2f2d2 | c4 z4 |" },
+      { type: "triplets", abc: "(3EGA (3cde g2 e2 | (3FAc (3def a2 f2 | (3GBd (3efg b2 g2 | c'4 z4 |" },
+      // Arpegii & Passing Chords
+      { type: "arpeggios", abc: "CE Gc eg c'g | FA cf ac' fa | ^FA c^d ^fa c'a | GB dg bd' g'2 |" },
+      // Sincopat
+      { type: "syncopated", abc: "C2 z E G2 c2 | z A F2 D2 B,2 | E2 z G c2 e2 | c4 z4 |" }
     ],
-    "3/4": ["C2 E2 G2 | F2 A2 c2 | G2 B2 d2 | c6 |"],
-    "2/4": ["C2 E2 | F2 A2 | G2 B2 | c4 |"],
-    "6/8": ["C2E G2c | A2F D2F | G2B d2B | c6 |"]
+    "3/4": [
+      { type: "normal", abc: "C2 E2 G2 | F2 A2 c2 | G2 B2 d2 | c6 |" },
+      { type: "triplets", abc: "(3CEG c2 G2 | (3FAc f2 c2 | (3GBd g2 d2 | c6 |" }
+    ],
+    "2/4": [
+      { type: "normal", abc: "C2 E2 | F2 A2 | G2 B2 | c4 |" },
+      { type: "triplets", abc: "(3CEG (3cGE | (3FAc (3fcA | (3GBd (3gdB | c4 |" }
+    ],
+    "6/8": [
+      { type: "normal", abc: "C2E G2c | A2F D2F | G2B d2B | c6 |" },
+      { type: "arpeggios", abc: "CEG cGE | FAc fcA | GBd gdB | ceg c'3 |" }
+    ]
+  },
+    balada: {
+    "4/4": [
+      { type: "normal", abc: "C2 E2 G2 c2 | B2 G2 E2 B,2 | A,2 C2 E2 A2 | F2 A2 c2 d2 |" },
+      { type: "normal", abc: "A2 c2 e2 a2 | F2 A2 c2 f2 | C2 E2 G2 c2 | G2 B2 d2 g2 |" },
+      { type: "triplets", abc: "(3C2E2G2 (3c2G2E2 | (3A,2C2E2 (3A2E2C2 | (3F,2A,2C2 (3F2C2A,2 | (3G,2B,2D2 G4 |" },
+      { type: "arpeggios", abc: "CE Gc eg c'g | A,C EA ce ac | FA cf ac' fa | GB dg bd' g'2 |" },
+      { type: "syncopated", abc: "C2 z E G2 c2 | z A, C2 E2 A2 | F2 z A c2 f2 | G4 z4 |" }
+    ],
+    "3/4": [
+      { type: "normal", abc: "C2 E2 G2 | A,2 C2 E2 | F2 A2 c2 | G2 B2 d2 |" },
+      { type: "triplets", abc: "(3CEG c2 G2 | (3A,CE A2 E2 | (3FAc f2 c2 | G6 |" }
+    ],
+    "2/4": [
+      { type: "normal", abc: "C2 G2 | A,2 E2 | F2 c2 | G2 d2 |" },
+      { type: "triplets", abc: "(3CEG (3cGE | (3A,CE (3AEC | (3FAc (3fcA | G4 |" }
+    ],
+    "6/8": [
+      { type: "normal", abc: "C2E G2c | B2G E2B, | A,2C E2A | G6 |" },
+      { type: "arpeggios", abc: "CEG cGE | A,CE AEC | FAc fcA | GBd gdB |" }
+    ]
+  },
+  clasic: {
+    "4/4": [
+      { type: "normal", abc: "C2 E2 G2 E2 | D2 F2 A2 F2 | G2 B2 d2 B2 | c4 z4 |" },
+      { type: "normal", abc: "c2 G2 E2 G2 | A2 E2 C2 E2 | F2 D2 B,2 D2 | C4 z4 |" },
+      { type: "triplets", abc: "(3C2E2G2 (3c2B2A2 | (3G2F2E2 (3D2C2B,2 | (3C2E2G2 (3B2d2f2 | e4 z4 |" },
+      { type: "arpeggios", abc: "CG EG CG EG | DA FA DA FA | GB dB GB dB | ce ge c4 |" },
+      { type: "syncopated", abc: "c2 z G E2 G2 | z F D2 B,2 D2 | E2 z G c2 e2 | c4 z4 |" }
+    ],
+    "3/4": [
+      { type: "normal", abc: "C2 E2 G2 | F2 D2 B,2 | G2 B2 d2 | c6 |" },
+      { type: "triplets", abc: "(3CEG (3cBA (3GFE | (3DFA (3dcB (3AGF | (3EGB (3edc (3BAG | c6 |" }
+    ],
+    "2/4": [
+      { type: "normal", abc: "C2 E2 | D2 F2 | G2 B2 | c4 |" },
+      { type: "arpeggios", abc: "CGEG | DAFA | GBdB | c4 |" }
+    ],
+    "6/8": [
+      { type: "normal", abc: "C2E G2E | D2F A2F | G2B d2B | c6 |" },
+      { type: "arpeggios", abc: "CEG cGE | DFA dAF | GBd gdB | c6 |" }
+    ]
+  },
+  lautaresc: {
+    "4/4": [
+      { type: "normal", abc: "E2 F2 ^G2 A2 | B2 c2 B2 A2 | ^G2 F2 E2 D2 | E4 z4 |" },
+      { type: "normal", abc: "A2 B2 c2 d2 | e2 d2 c2 B2 | A2 ^G2 F2 E2 | E4 z4 |" },
+      { type: "triplets", abc: "(3E2F2^G2 (3A2B2c2 | (3d2c2B2 (3A2^G2F2 | (3E2^G2B2 (3d2c2B2 | E4 z4 |" },
+      { type: "triplets", abc: "(3e2d2c2 (3B2A2^G2 | (3A2B2c2 (3B2A2^G2 | (3F2^G2A2 (3^G2F2E2 | E4 z4 |" },
+      { type: "arpeggios", abc: "EF ^GA Bc de | ed cB A^G FE | ^GA Bc dB ^GF | E4 z4 |" },
+      { type: "syncopated", abc: "E2 z ^G A2 c2 | z B A2 ^G2 F2 | E2 z F ^G2 B2 | E4 z4 |" }
+    ],
+    "3/4": [
+      { type: "normal", abc: "E2 ^G2 B2 | c2 B2 A2 | ^G2 F2 E2 | E6 |" },
+      { type: "triplets", abc: "(3EF^G (3ABc B2 | (3dcB (3A^GF E2 | (3E^GB d2 c2 | E6 |" }
+    ],
+    "2/4": [
+      { type: "normal", abc: "E2 ^G2 | A2 c2 | B2 ^G2 | E4 |" },
+      { type: "triplets", abc: "(3EF^G (3ABc | (3dcB (3A^GF | (3E^GB (3dcB | E4 |" }
+    ],
+    "6/8": [
+      { type: "normal", abc: "E2^G B2c | d2c B2A | ^G2F E2D | E6 |" },
+      { type: "arpeggios", abc: "EF^G ABc | dcB A^GF | E^GB dcB | E6 |" }
+    ]
+  },
+  folclor: {
+    "4/4": [
+      { type: "normal", abc: "C2 D2 E2 G2 | A2 G2 E2 D2 | C2 E2 G2 A2 | G4 z4 |" },
+      { type: "normal", abc: "G2 A2 B2 c2 | d2 c2 B2 A2 | G2 E2 D2 C2 | C4 z4 |" },
+      { type: "triplets", abc: "(3C2D2E2 (3G2A2G2 | (3E2D2C2 (3D2E2G2 | (3A2B2c2 (3B2A2G2 | C4 z4 |" },
+      { type: "triplets", abc: "(3G2A2B2 (3c2d2e2 | (3d2c2B2 (3A2G2E2 | (3D2E2G2 (3A2G2E2 | C4 z4 |" },
+      { type: "arpeggios", abc: "CD EG AG ED | CE GA cA GE | GA Bc dB AG | c4 z4 |" },
+      { type: "syncopated", abc: "C2 z E G2 A2 | z G E2 D2 C2 | G2 z A B2 d2 | c4 z4 |" }
+    ],
+    "3/4": [
+      { type: "normal", abc: "C2 E2 G2 | A2 G2 E2 | D2 E2 G2 | C6 |" },
+      { type: "triplets", abc: "(3CDE G2 E2 | (3FGA c2 A2 | (3GAB d2 B2 | c6 |" }
+    ],
+    "2/4": [
+      { type: "normal", abc: "C2 E2 | G2 A2 | G2 E2 | C4 |" },
+      { type: "triplets", abc: "(3CDE (3GAG | (3EDC (3DEG | (3ABc (3BAG | C4 |" }
+    ],
+    "6/8": [
+      { type: "normal", abc: "C2E G2A | G2E D2C | E2G A2B | c6 |" },
+      { type: "arpeggios", abc: "CDE GAG | EDC DEG | ABc BAG | c6 |" }
+    ]
   }
-};
 
+};
 
 const keyOffsets = {
   "C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "Bb": 10, "Eb": 3
 };
-
 function generateMusic() {
   const timeSig = document.getElementById('time-sig').value;
   const barsCount = parseInt(document.getElementById('bars-count').value);
   const keySig = document.getElementById('key-sig').value;
   const instKey = document.getElementById('instrument').value;
+  const styleEl = document.getElementById('rhythm-style');
+  const rhythmStyle = styleEl ? styleEl.value : 'all';
   const inst = instrumentConfig[instKey];
 
-  const availablePatterns = patterns[currentGenre][timeSig] || patterns[currentGenre]["4/4"];
-  const rawPattern = availablePatterns.at(Math.floor(Math.random() * availablePatterns.length));
+  const genrePatterns = patterns[currentGenre][timeSig] || patterns[currentGenre]["4/4"];
+  let filteredPatterns = genrePatterns;
+
+  if (rhythmStyle !== 'all') {
+    const byType = genrePatterns.filter(p => p.type === rhythmStyle);
+    if (byType.length > 0) filteredPatterns = byType;
+  }
+
+  const chosenObj = filteredPatterns[Math.floor(Math.random() * filteredPatterns.length)];
+  const rawPattern = chosenObj.abc;
 
   let measures = rawPattern.split('|').filter(m => m.trim() !== '');
   while (measures.length < barsCount) {
-    measures = measures.concat(measures);
+    // La repetare, amestecăm ușor ordinea măsurilor interioare pentru variație
+    const shuffled = [...measures].sort(() => Math.random() - 0.3);
+    measures = measures.concat(shuffled);
   }
   const selectedMusic = measures.slice(0, barsCount).join(' | ') + ' |]';
   const totalTranspose = keyOffsets[keySig] + inst.transpose;
