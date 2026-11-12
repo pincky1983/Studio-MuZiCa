@@ -60,10 +60,31 @@ function saveApiKey() {
 
 function openGenerator(genre) {
   currentGenre = genre;
-  document.getElementById('genre-title').innerText = genre.toUpperCase();
+  const isImprov = genre === 'improvizatie';
+  document.getElementById('genre-title').innerText = isImprov ? 'IMPROVIZAȚIE SOLO' : genre.toUpperCase();
+  
+  const stdCtrl = document.getElementById('standard-controls');
+  const impCtrl = document.getElementById('improv-controls');
+  if (stdCtrl) stdCtrl.style.display = isImprov ? 'none' : 'flex';
+  if (impCtrl) impCtrl.style.display = isImprov ? 'block' : 'none';
+
+  const barsSelect = document.getElementById('bars-count');
+  if (barsSelect) {
+    const maxBars = isImprov ? 24 : 12;
+    const defaultBars = isImprov ? 8 : 4;
+    let optionsHtml = '';
+    for (let i = 1; i <= maxBars; i++) {
+      const label = i === 1 ? '1 Măsură' : `${i} Măsuri`;
+      const selected = i === defaultBars ? ' selected' : '';
+      optionsHtml += `<option value="${i}"${selected}>${label}</option>`;
+    }
+    barsSelect.innerHTML = optionsHtml;
+  }
+
   switchScreen('generator-screen');
   generateMusic();
 }
+
 
 function openScanner() {
   switchScreen('scanner-screen');
