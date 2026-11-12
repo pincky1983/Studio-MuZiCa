@@ -289,7 +289,12 @@ const patterns = {
 };
 
 const keyOffsets = {
-  "C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "Bb": 10, "Eb": 3
+  // Game Majore
+  "C": 0, "G": 7, "D": 2, "A": 9, "E": 4,
+  "F": 5, "Bb": 10, "Eb": 3, "Ab": 8,
+  // Game Minore (în aceeași ordine cu cele majore)
+  "Cm": 0, "Gm": 7, "Dm": 2, "Am": 9, "Em": 4,
+  "Fm": 5, "Bbm": 10, "Ebm": 3, "Abm": 8
 };
 const improvScales = {
   blues: {
