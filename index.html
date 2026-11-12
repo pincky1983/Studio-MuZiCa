@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Studio Muzical AI</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://jsdelivr.net"></script>
+  <link rel="stylesheet" href="https://jsdelivr.net">
+</head>
+<body>
+
+  <!-- ECRAN 1: MENIU PRINCIPAL -->
+  <div id="home-screen" class="screen active">
+    <header>
+      <h1>Studio Muzical</h1>
+      <p>Generator & Transpunere AI</p>
+    </header>
+    
+    <div class="grid-menu">
+      <button class="menu-card jazz" onclick="openGenerator('jazz')">
+        <span class="icon">🎷</span>
+        <h2>Jazz</h2>
+        <p>Modulații & Improvizație</p>
+      </button>
+
+      <button class="menu-card blues" onclick="openGenerator('blues')">
+        <span class="icon">🎸</span>
+        <h2>Blues</h2>
+        <p>Progresii & Turnarounds</p>
+      </button>
+
+      <button class="menu-card gospel" onclick="openGenerator('gospel')">
+        <span class="icon">🎹</span>
+        <h2>Gospel</h2>
+        <p>Modulații & Pasaje</p>
+      </button>
+
+      <button class="menu-card scanner" onclick="openScanner()">
+        <span class="icon">📷</span>
+        <h2>Scanare AI</h2>
+        <p>Poză / PDF -> Transpunere</p>
+      </button>
+    </div>
+  </div>
+
+  <!-- ECRAN 2: GENERATOR JAZZ / BLUES / GOSPEL -->
+  <div id="generator-screen" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goHome()">← Înapoi</button>
+      <h2 id="genre-title">Jazz</h2>
+    </div>
+
+    <div class="controls-panel">
+      <div class="control-group">
+        <label>Măsura:</label>
+        <select id="time-sig">
+          <option value="4/4">4/4</option>
+          <option value="3/4">3/4</option>
+          <option value="2/4">2/4</option>
+          <option value="6/8">6/8</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Lungime modulație:</label>
+        <select id="bars-count">
+          <option value="1">1 Măsură</option>
+          <option value="2" selected>2 Măsuri</option>
+          <option value="3">3 Măsuri</option>
+          <option value="4">4 Măsuri</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Gama (Concert):</label>
+        <select id="key-sig">
+          <option value="C">Do Major (C)</option>
+          <option value="F">Fa Major (F)</option>
+          <option value="Bb">Si♭ Major (B♭)</option>
+          <option value="Eb">Mi♭ Major (E♭)</option>
+          <option value="G">Sol Major (G)</option>
+          <option value="D">Re Major (D)</option>
+          <option value="A">La Major (A)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Instrument:</label>
+        <select id="instrument">
+          <option value="piano">Pian (Do / Concert)</option>
+          <option value="trumpet_c">Trompetă Do (Concert)</option>
+          <option value="guitar">Chitară (Do / Concert)</option>
+          <option value="trumpet_bb">Trompetă Si♭ (+1 ton)</option>
+          <option value="sax_tenor">Saxofon Tenor (Si♭)</option>
+          <option value="sax_alto">Saxofon Alto (Mi♭)</option>
+        </select>
+      </div>
+
+      <button class="generate-btn" onclick="generateMusic()">Generează Modulația</button>
+    </div>
+
+    <div id="audio-controls"></div>
+    <div id="sheet-music-container">
+      <div id="paper"></div>
+    </div>
+  </div>
+
+  <!-- ECRAN 3: SCANARE AI SI TRANSPUNERE -->
+  <div id="scanner-screen" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goHome()">← Înapoi</button>
+      <h2>Scanare & Transpunere AI</h2>
+    </div>
+
+    <div class="controls-panel">
+      <div class="control-group">
+        <label>Cheie Gemini API:</label>
+        <input type="password" id="api-key-input" placeholder="Lipește cheia API aici..." onchange="saveApiKey()">
+      </div>
+
+      <div class="control-group">
+        <label>Transpune pentru:</label>
+        <select id="scan-instrument" onchange="renderScannedMusic()">
+          <option value="piano">Pian (Do / Concert)</option>
+          <option value="trumpet_c">Trompetă Do (Concert)</option>
+          <option value="guitar">Chitară (Do / Concert)</option>
+          <option value="trumpet_bb">Trompetă Si♭ (+1 ton)</option>
+          <option value="sax_tenor">Saxofon Tenor (Si♭)</option>
+          <option value="sax_alto">Saxofon Alto (Mi♭)</option>
+        </select>
+      </div>
+
+      <label class="file-btn">
+        📷 Fă o poză / Încarcă Imagine
+        <input type="file" accept="image/*" capture="environment" onchange="processFileWithAI(event)" hidden>
+      </label>
+
+      <label class="file-btn">
+        📂 Încarcă Partitură PDF
+        <input type="file" accept="application/pdf" onchange="processFileWithAI(event)" hidden>
+      </label>
+    </div>
+
+    <div id="ai-status" class="status-msg"></div>
+
+    <div id="scan-audio-controls"></div>
+    <div id="scan-sheet-container" style="display:none;">
+      <div id="scan-paper"></div>
+    </div>
+
+    <div id="preview-container">
+      <img id="image-preview" style="display:none; max-width:100%; border-radius:8px; margin-top:15px;" />
+    </div>
+  </div>
+
+  <script src="app.js"></script>  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+
+</body>
+</html>
