@@ -138,18 +138,33 @@ function renderAndPlay(abcString, paperId, audioContainerId, midiProgram, transp
       displayProgress: true
     });
 
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const audioContext = new AudioCtx();
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+
     const createSynth = new ABCJS.synth.CreateSynth();
     createSynth.init({
-      visualObj: visualObj,
-      options: { program: midiProgram, midiTranspose: transposeSemitones }
+      audioContext: audioContext,
+      visualObj: visualObj[0],
+      options: {
+        soundFontUrl: "https://github.io",
+        program: midiProgram,
+        midiTranspose: transposeSemitones
+      }
     }).then(() => {
-      synthControl.setTune(visualObj, false, {
+      synthControl.setTune(visualObj[0], false, {
+        soundFontUrl: "https://github.io",
         program: midiProgram,
         midiTranspose: transposeSemitones
       });
+    }).catch(err => {
+      console.error("Eroare audio:", err);
     });
   }
 }
+
 
 async function processFileWithAI(event) {
   const file = event.target.files.at(0);
