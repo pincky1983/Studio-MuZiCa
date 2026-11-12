@@ -104,14 +104,56 @@
 
       <div class="control-group">
         <label>Instrument:</label>
-        <select id="instrument">
-          <option value="piano">Pian (Do / Concert)</option>
-          <option value="trumpet_c">Trompetă Do (Concert)</option>
-          <option value="guitar">Chitară (Do / Concert)</option>
-          <option value="trumpet_bb">Trompetă Si♭ (+1 ton)</option>
-          <option value="sax_tenor">Saxofon Tenor (Si♭)</option>
-          <option value="sax_alto">Saxofon Alto (Mi♭)</option>
+                <select id="instrument">
+          <optgroup label="Clape & Acordeon">
+            <option value="piano">Pian Acustic (Do / Concert)</option>
+            <option value="electric_piano">Pian Electric</option>
+            <option value="accordion">Acordeon</option>
+            <option value="organ">Orgă Hammond</option>
+            <option value="harpsichord">Clavecin</option>
+          </optgroup>
+
+          <optgroup label="Alămuri (Brass)">
+            <option value="trumpet_c">Trompetă Do (Concert)</option>
+            <option value="trumpet_bb">Trompetă Si♭ (+1 ton)</option>
+            <option value="trombone">Trombon</option>
+            <option value="french_horn">Corn Francez (Fa)</option>
+            <option value="tuba">Tubă</option>
+          </optgroup>
+
+          <optgroup label="Suflători din lemn">
+            <option value="soprano_sax">Saxofon Sopran (Si♭)</option>
+            <option value="alto_sax">Saxofon Alto (Mi♭)</option>
+            <option value="tenor_sax">Saxofon Tenor (Si♭)</option>
+            <option value="clarinet">Clarinet (Si♭)</option>
+            <option value="flute">Flaut</option>
+            <option value="pan_flute">Nai</option>
+            <option value="oboe">Oboi</option>
+          </optgroup>
+
+          <optgroup label="Corzi (Strings)">
+            <option value="violin">Vioară</option>
+            <option value="viola">Violă</option>
+            <option value="cello">Violoncel</option>
+            <option value="contrabass">Contrabas</option>
+            <option value="strings_ensemble">Ansamblu Corzi</option>
+          </optgroup>
+
+          <optgroup label="Chitare & Bas">
+            <option value="guitar">Chitară Clasică (Do / Concert)</option>
+            <option value="steel_guitar">Chitară Folk</option>
+            <option value="jazz_guitar">Chitară Jazz</option>
+            <option value="clean_guitar">Chitară Electrică</option>
+            <option value="acoustic_bass">Bas Acustic</option>
+            <option value="electric_bass">Bas Electric</option>
+          </optgroup>
+
+          <optgroup label="Percuție & Mallet">
+            <option value="vibraphone">Vibrafon</option>
+            <option value="marimba">Marimba</option>
+          </optgroup>
         </select>
+
       </div>
 
       <button class="generate-btn" onclick="generateMusic()">Generează Modulația</button>

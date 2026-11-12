@@ -2,6 +2,50 @@ let currentGenre = 'jazz';
 let synthControl = null;
 let lastScannedAbc = "";
 
+const instrumentConfig = {
+  // Clape & Acordeon
+  piano: { transpose: 0, midi: 0, name: "Pian Acustic" },
+  electric_piano: { transpose: 0, midi: 4, name: "Pian Electric" },
+  accordion: { transpose: 0, midi: 21, name: "Acordeon" },
+  organ: { transpose: 0, midi: 16, name: "Orgă Hammond" },
+  harpsichord: { transpose: 0, midi: 6, name: "Clavecin" },
+
+  // Alămuri (Brass)
+  trumpet_c: { transpose: 0, midi: 56, name: "Trompetă Do" },
+  trumpet_bb: { transpose: 2, midi: 56, name: "Trompetă Sib" },
+  trombone: { transpose: 0, midi: 57, name: "Trombon" },
+  french_horn: { transpose: 7, midi: 60, name: "Corn Francez" },
+  tuba: { transpose: 0, midi: 58, name: "Tubă" },
+
+  // Suflători din lemn (Woodwinds)
+  soprano_sax: { transpose: 2, midi: 64, name: "Saxofon Sopran" },
+  alto_sax: { transpose: 9, midi: 65, name: "Saxofon Alto" },
+  tenor_sax: { transpose: 14, midi: 66, name: "Saxofon Tenor" },
+  clarinet: { transpose: 2, midi: 71, name: "Clarinet" },
+  flute: { transpose: 0, midi: 73, name: "Flaut" },
+  pan_flute: { transpose: 0, midi: 75, name: "Nai" },
+  oboe: { transpose: 0, midi: 68, name: "Oboi" },
+
+  // Corzi (Strings)
+  violin: { transpose: 0, midi: 40, name: "Vioară" },
+  viola: { transpose: 0, midi: 41, name: "Violă" },
+  cello: { transpose: 0, midi: 42, name: "Violoncel" },
+  contrabass: { transpose: 12, midi: 43, name: "Contrabas" },
+  strings_ensemble: { transpose: 0, midi: 48, name: "Ansamblu Corzi" },
+
+  // Chitare & Bas
+  guitar: { transpose: 0, midi: 24, name: "Chitară Clasică" },
+  steel_guitar: { transpose: 0, midi: 25, name: "Chitară Folk" },
+  jazz_guitar: { transpose: 0, midi: 26, name: "Chitară Jazz" },
+  clean_guitar: { transpose: 0, midi: 27, name: "Chitară Electrică" },
+  acoustic_bass: { transpose: 12, midi: 32, name: "Bas Acustic" },
+  electric_bass: { transpose: 12, midi: 33, name: "Bas Electric" },
+
+  // Percuție & Mallet
+  vibraphone: { transpose: 0, midi: 11, name: "Vibrafon" },
+  marimba: { transpose: 0, midi: 12, name: "Marimba" }
+};
+
 window.onload = () => {
   const savedKey = localStorage.getItem('gemini_api_key');
   if (savedKey) {
@@ -66,14 +110,6 @@ const patterns = {
   }
 };
 
-const instrumentConfig = {
-  piano:      { transpose: 0,  midi: 0,  name: "Pian" },
-  trumpet_c:  { transpose: 0,  midi: 56, name: "Trompeta Do" },
-  guitar:     { transpose: 0,  midi: 24, name: "Chitara" },
-  trumpet_bb: { transpose: 2,  midi: 56, name: "Trompeta Sib" },
-  sax_tenor:  { transpose: 14, midi: 66, name: "Sax Tenor" },
-  sax_alto:   { transpose: 9,  midi: 65, name: "Sax Alto" }
-};
 
 const keyOffsets = {
   "C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "Bb": 10, "Eb": 3
@@ -149,13 +185,13 @@ function renderAndPlay(abcString, paperId, audioContainerId, midiProgram, transp
       audioContext: audioContext,
       visualObj: visualObj[0],
       options: {
-        soundFontUrl: "https://github.io",
+        soundFontUrl: "./soundfonts/",
         program: midiProgram,
         midiTranspose: transposeSemitones
       }
     }).then(() => {
       synthControl.setTune(visualObj[0], false, {
-        soundFontUrl: "https://github.io",
+        soundFontUrl: "./soundfonts/",
         program: midiProgram,
         midiTranspose: transposeSemitones
       });
