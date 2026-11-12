@@ -807,3 +807,45 @@ renderScannedMusic = function() {
   if (tempoBox) tempoBox.style.display = 'block';
 };
 window.addEventListener('DOMContentLoaded', renderSavedScoresList); 
+function downloadScorePNG() {
+  const svg = document.querySelector('#paper svg');
+  if (!svg) {
+    alert('Generează mai întâi o partitură înainte de a o descărca!');
+    return;
+  }
+
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(svg);
+  const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = function () {
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    const rect = svg.getBoundingClientRect();
+    const width = svg.viewBox.baseVal.width || rect.width || 800;
+    const height = svg.viewBox.baseVal.height || rect.height || 400;
+
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    URL.revokeObjectURL(url);
+
+    const pngUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    const genreName = (currentGenre || 'partitura').toLowerCase();
+    const keyName = document.getElementById('key-sig')?.value || 'C';
+    a.download = `Partitura_${genreName}_${keyName}.png`;
+    a.href = pngUrl;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+  img.src = url;
+}
