@@ -1,15 +1,17 @@
 {
   "name": "Studio Muzical AI",
   "short_name": "StudioMuzica",
-  "start_url": "index.html",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#1db954",
   "icons": [
     {
-      "src": "https://flaticon.com",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
