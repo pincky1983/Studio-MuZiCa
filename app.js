@@ -175,9 +175,8 @@ async function processFileWithAI(event) {
 
   try {
     const base64Data = await fileToBase64(file);
-
-    const response = await fetch(`https://googleapis.com{apiKey}`, {
-      method: "POST",
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}, {
+       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{
@@ -187,7 +186,8 @@ async function processFileWithAI(event) {
             },
             {
               inline_data: {
-                mime_type: file.type,
+  mime_type: file.type.startsWith('image/') ? 'image/jpeg' : file.type,
+
                 data: base64Data
               }
             }
@@ -221,15 +221,42 @@ function renderScannedMusic() {
   const inst = instrumentConfig[instKey];
   renderAndPlay(lastScannedAbc, "scan-paper", "#scan-audio-controls", inst.midi, inst.transpose);
 }
-
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result.split(',').at(1));
-    reader.onerror = error => reject(error);
+    if (file.type && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 1200;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else { w = Math.round((w * maxDim) / h); h = maxDim; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          resolve(compressed.split(',').at(1));
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    } else {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',').at(1));
+      reader.onerror = error => reject(error);
+    }
   });
 }
+
 window.addEventListener('load', () => {
   const splash = document.getElementById('splash-screen');
   if (splash) {
@@ -294,3 +321,138 @@ window.addEventListener('DOMContentLoaded', () => {
     updateMasterVolume(savedPercent);
   }
 });
+// === EXPORT PDF A4 (FUNDAL ALB, NOTE NEGRE) ===
+async function exportScoreToPDF() {
+  const svgEl = document.querySelector('#scan-paper svg');
+  if (!svgEl) {
+    alert('Nu există nicio partitură generată de exportat!');
+    return;
+  }
+
+  try {
+    const clone = svgEl.cloneNode(true);
+    clone.querySelectorAll('path, text, rect, line, circle, ellipse, polygon').forEach(el => {
+      const fill = el.getAttribute('fill');
+      const stroke = el.getAttribute('stroke');
+      if (fill && fill !== 'none') el.setAttribute('fill', '#000000');
+      if (stroke && stroke !== 'none') el.setAttribute('stroke', '#000000');
+    });
+
+    const bbox = svgEl.getBoundingClientRect();
+    const width = Math.max(bbox.width, 800);
+    const height = Math.max(bbox.height, 400);
+    clone.setAttribute('width', width);
+    clone.setAttribute('height', height);
+
+    const svgData = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scale = 2;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: width > height ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth() - 20;
+      const pageHeight = (canvas.height * pageWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 15, pageWidth, pageHeight);
+      pdf.save('Partitura-Studio-Muzical-AI.pdf');
+    };
+    img.src = url;
+  } catch (err) {
+    alert('Eroare la generarea PDF: ' + err.message);
+  }
+}
+
+// === BIBLIOTECĂ LOCALĂ "PARTITURILE MELE" ===
+function saveScoreToLibrary() {
+  if (!lastScannedAbc) {
+    alert('Nu există nicio partitură de salvat!');
+    return;
+  }
+  const titleMatch = lastScannedAbc.match(/T:\s*(.+)/);
+  const defaultName = titleMatch ? titleMatch.at(1).trim() : 'Partitură ' + new Date().toLocaleDateString('ro-RO');
+  const name = prompt('Numele partiturii:', defaultName);
+  if (!name) return;
+
+  const saved = JSON.parse(localStorage.getItem('saved_scores_list') || '[]');
+  saved.unshift({ id: Date.now(), name: name, abc: lastScannedAbc });
+  localStorage.setItem('saved_scores_list', JSON.stringify(saved));
+  renderSavedScoresList();
+  alert('✅ Partitura a fost salvată în bibliotecă!');
+}
+
+function renderSavedScoresList() {
+  const container = document.getElementById('saved-scores-list');
+  if (!container) return;
+  const saved = JSON.parse(localStorage.getItem('saved_scores_list') || '[]');
+  if (saved.length === 0) {
+    container.innerHTML = '<p style="color:#888; font-size:13px;">Nicio partitură salvată încă.</p>';
+    return;
+  }
+  container.innerHTML = saved.map(item => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#1e1e1e; padding:10px 12px; border-radius:8px; border:1px solid #333;">
+      <span onclick="loadSavedScore(${item.id})" style="cursor:pointer; flex:1; font-weight:500;">🎵 ${item.name}</span>
+      <button onclick="deleteSavedScore(${item.id})" style="background:transparent; border:none; color:#ff5555; font-size:16px; cursor:pointer; padding:4px 8px;">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function loadSavedScore(id) {
+  const saved = JSON.parse(localStorage.getItem('saved_scores_list') || '[]');
+  const found = saved.find(s => s.id === id);
+  if (found) {
+    lastScannedAbc = found.abc;
+    document.getElementById('scan-sheet-container').style.display = 'block';
+    const tempoBox = document.getElementById('tempo-control-box');
+    if (tempoBox) tempoBox.style.display = 'block';
+    renderScannedMusic();
+  }
+}
+
+function deleteSavedScore(id) {
+  let saved = JSON.parse(localStorage.getItem('saved_scores_list') || '[]');
+  saved = saved.filter(s => s.id !== id);
+  localStorage.setItem('saved_scores_list', JSON.stringify(saved));
+  renderSavedScoresList();
+}
+
+// === CONTROL VITEZĂ / TEMPO LA REDARE ===
+function changePlaybackTempo(percent) {
+  const label = document.getElementById('tempo-val');
+  if (label) label.textContent = percent + '%';
+  if (!lastScannedAbc) return;
+
+  const baseBpm = 100;
+  const newBpm = Math.round((baseBpm * percent) / 100);
+  if (/^Q:/m.test(lastScannedAbc)) {
+    lastScannedAbc = lastScannedAbc.replace(/^Q:.*$/m, `Q:1/4=${newBpm}`);
+  } else {
+    lastScannedAbc = `Q:1/4=${newBpm}\n` + lastScannedAbc;
+  }
+  renderScannedMusic();
+}
+
+const origRenderScanned = renderScannedMusic;
+renderScannedMusic = function() {
+  origRenderScanned();
+  const tempoBox = document.getElementById('tempo-control-box');
+  if (tempoBox) tempoBox.style.display = 'block';
+};
+
+window.addEventListener('DOMContentLoaded', renderSavedScoresList);
