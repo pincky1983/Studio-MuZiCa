@@ -155,31 +155,12 @@
     </div>
   </div>
 
-  <script src="app.js"></script>  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js');
-    }
-  </script>
-    const c = document.createElement('canvas');
-    c.width = c.height = 512;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#1db954';
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.fillStyle = '#121212';
-    ctx.font = 'bold 300px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('♪', 256, 270);
-
-    fetch('manifest.json').then(r => r.json()).then(m => {
-      m.icons = [{ src: c.toDataURL('image/png'), sizes: '512x512', type: 'image/png' }];
-      const blob = new Blob([JSON.stringify(m)], { type: 'application/json' });
-      document.querySelector('link[rel="manifest"]').href = URL.createObjectURL(blob);
-    });
-
+  <script src="app.js"></script>
+  <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
     }
   </script>
 </body>
 </html>
+
