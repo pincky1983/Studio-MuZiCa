@@ -262,8 +262,30 @@ const patterns = {
       { type: "normal", abc: "C2E G2A | G2E D2C | E2G A2B | c6 |" },
       { type: "arpeggios", abc: "CDE GAG | EDC DEG | ABc BAG | c6 |" }
     ]
+  },
+  sarbeasca: {
+    "4/4": [
+      { type: "normal", abc: "E2 ^G2 A2 B2 | c2 B2 A2 ^G2 | F2 ^G2 A2 ^G2 | F2 E2 E4 |" },
+      { type: "normal", abc: "A2 c2 B2 A2 | ^G2 B2 A2 ^G2 | F2 A2 ^G2 F2 | E2 ^G2 E4 |" },
+      { type: "triplets", abc: "(3E2^G2A2 (3B2c2B2 | (3A2^G2F2 (3E2F2^G2 | (3A2B2c2 (3d2c2B2 | (3A2^G2F2 E4 |" },
+      { type: "triplets", abc: "(3e2d2c2 (3B2A2^G2 | (3c2B2A2 (3^G2F2E2 | (3F2^G2A2 (3B2A2^G2 | (3F2E2D2 E4 |" },
+      { type: "arpeggios", abc: "E^G AB cB A^G | F^G AB cB AF | E^G Bc dc B^G | FE ^GF E4 |" },
+      { type: "syncopated", abc: "E2 z ^G A2 B2 | z c B2 A2 ^G2 | F2 z ^G A2 ^G2 | F2 E2 E4 |" }
+    ],
+    "3/4": [
+      { type: "normal", abc: "E2 ^G2 B2 | c2 B2 A2 | ^G2 F2 E2 | E6 |" },
+      { type: "triplets", abc: "(3E^GB (3dcB A2 | (3^GFE (3F^GA B2 | (3cBA (3^GFE E2 | E6 |" }
+    ],
+    "2/4": [
+      { type: "normal", abc: "E^G AB | cB A^G | F^G A^G | FE E2 |" },
+      { type: "triplets", abc: "(3E^GA (3BcB | (3A^GF (3EF^G | (3ABc (3BA^G | FE E2 |" },
+      { type: "arpeggios", abc: "E^GBd | cBA^G | F^GA^G | FEE2 |" }
+    ],
+    "6/8": [
+      { type: "normal", abc: "E2^G A2B | c2B A2^G | F2^G A2^G | F2E E3 |" },
+      { type: "arpeggios", abc: "E^GA BcB | A^GF EF^G | ABc BA^G | F2E E3 |" }
+    ]
   }
-
 };
 
 const keyOffsets = {
@@ -338,7 +360,17 @@ function buildImprovisationAbc(barsCount, timeSig) {
     resultBars.push(barStr.trim());
   }
 
-  return resultBars.join(' | ') + ' |]';
+    let formatted = '';
+  for (let i = 0; i < resultBars.length; i++) {
+    formatted += resultBars[i] + (i === resultBars.length - 1 ? ' |]' : ' |');
+    if ((i + 1) % 4 === 0 && i !== resultBars.length - 1) {
+      formatted += '\n';
+    } else {
+      formatted += ' ';
+    }
+  }
+  return formatted;
+
 }
 
 function generateMusic() {
@@ -375,7 +407,18 @@ function generateMusic() {
       const shuffled = [...measures].sort(() => Math.random() - 0.3);
       measures = measures.concat(shuffled);
     }
-    selectedMusic = measures.slice(0, barsCount).join(' | ') + ' |]';
+        const finalMeasures = measures.slice(0, barsCount).map(m => m.trim());
+    let formatted = '';
+    for (let i = 0; i < finalMeasures.length; i++) {
+      formatted += finalMeasures[i] + (i === finalMeasures.length - 1 ? ' |]' : ' |');
+      if ((i + 1) % 4 === 0 && i !== finalMeasures.length - 1) {
+        formatted += '\n';
+      } else {
+        formatted += ' ';
+      }
+    }
+    selectedMusic = formatted;
+
   }
 
   const totalTranspose = keyOffsets[keySig] + inst.transpose;
