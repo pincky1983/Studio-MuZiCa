@@ -147,3 +147,57 @@ select, input[type="password"] {
   min-width: 40px;
   text-align: right;
 }
+/* Claviatura de pian interactiva (4 octave, derulabila) */
+.piano-container {
+  display: flex;
+  position: relative;
+  height: 195px;
+  background: #111;
+  padding: 10px 6px 6px;
+  border-radius: 14px;
+  margin-top: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  user-select: none;
+  border: 1px solid #333;
+}
+
+.piano-key-white {
+  flex: 0 0 50px;
+  width: 50px;
+  height: 100%;
+  background: linear-gradient(to bottom, #ffffff 0%, #e8e8e8 100%);
+  border: 1px solid #888;
+  border-radius: 0 0 8px 8px;
+  color: #222;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.piano-key-white:active {
+  background: #1db954;
+  color: white;
+}
+
+.piano-key-black {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 60%;
+  background: linear-gradient(to bottom, #333 0%, #000 100%);
+  border: 1px solid #000;
+  border-radius: 0 0 6px 6px;
+  margin-left: -16px;
+  margin-right: -16px;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.piano-key-black:active {
+  background: #1db954;
+}

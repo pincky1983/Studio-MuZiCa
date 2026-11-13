@@ -29,8 +29,9 @@ const instrumentConfig = {
   // Corzi (Strings)
   violin: { transpose: 0, midi: 40, name: "Vioară" },
   viola: { transpose: 0, midi: 41, name: "Violă" },
-  cello: { transpose: 0, midi: 42, name: "Violoncel" },
-  contrabass: { transpose: 12, midi: 43, name: "Contrabas" },
+  cello: { transpose: 0, midi: 42, name: "Violoncel", clef: "bass" },
+contrabass: { transpose: 0, midi: 32, name: "Contrabas", clef: "bass" },
+
   strings_ensemble: { transpose: 0, midi: 48, name: "Ansamblu Corzi" },
 
   // Chitare & Bas
@@ -38,8 +39,8 @@ const instrumentConfig = {
   steel_guitar: { transpose: 0, midi: 25, name: "Chitară Folk" },
   jazz_guitar: { transpose: 0, midi: 26, name: "Chitară Jazz" },
   clean_guitar: { transpose: 0, midi: 27, name: "Chitară Electrică" },
-  acoustic_bass: { transpose: 12, midi: 32, name: "Bas Acustic" },
-  electric_bass: { transpose: 12, midi: 33, name: "Bas Electric" },
+  acoustic_bass: { transpose: 0, midi: 32, name: "Bas Acustic", clef: "bass" },
+electric_bass: { transpose: 0, midi: 33, name: "Bas Electric", clef: "bass" },
 
   // Percuție & Mallet
   vibraphone: { transpose: 0, midi: 11, name: "Vibrafon" },
@@ -404,15 +405,31 @@ function generateMusic() {
       if (byType.length > 0) filteredPatterns = byType;
     }
 
-    const chosenObj = filteredPatterns[Math.floor(Math.random() * filteredPatterns.length)];
-    const rawPattern = chosenObj.abc;
+        // Colectează toate măsurile din toate șabloanele disponibile
+    let allMeasures = [];
+    filteredPatterns.forEach(p => {
+      const mList = p.abc.split('|').map(m => m.trim()).filter(m => m !== '');
+      allMeasures = allMeasures.concat(mList);
+    });
 
-    let measures = rawPattern.split('|').filter(m => m.trim() !== '');
-    while (measures.length < barsCount) {
-      const shuffled = [...measures].sort(() => Math.random() - 0.3);
-      measures = measures.concat(shuffled);
+    // Creează variații melodice automate (octavă sus/jos sau oglindire)
+    const varyMeasure = (m) => {
+      const mode = Math.floor(Math.random() * 4);
+      if (mode === 0) return m; // original
+      if (mode === 1) return m.replace(/([A-G])(?![,'])/g, (_, n) => n.toLowerCase()); // urcă 1 octavă
+      if (mode === 2) return m.replace(/([a-g])(?![,'])/g, (_, n) => n.toUpperCase()); // coboară 1 octavă
+      // Inversează ordinea grupurilor ritmice din măsură
+      const parts = m.split(' ').filter(Boolean);
+      return parts.length > 1 ? parts.reverse().join(' ') : m;
+    };
+
+    const finalMeasures = [];
+    for (let i = 0; i < barsCount; i++) {
+      const randM = allMeasures[Math.floor(Math.random() * allMeasures.length)];
+      // Ultima măsură rămâne nemodificată pentru o rezolvare (cadență) naturală
+      finalMeasures.push(i === barsCount - 1 ? randM : varyMeasure(randM));
     }
-        const finalMeasures = measures.slice(0, barsCount).map(m => m.trim());
+
     let formatted = '';
     for (let i = 0; i < finalMeasures.length; i++) {
       formatted += finalMeasures[i] + (i === finalMeasures.length - 1 ? ' |]' : ' |');
@@ -425,22 +442,23 @@ function generateMusic() {
     selectedMusic = formatted;
 
   }
+const octaveShift = parseInt(document.getElementById('octave-shift')?.value || 0);
+const totalTranspose = keyOffsets[keySig] + inst.transpose + octaveShift;
 
-  const totalTranspose = keyOffsets[keySig] + inst.transpose;
+const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : "";
 
-  const abcString = `
+
+const abcString = `
 X: 1
 T: ${titleLabel}
 M: ${timeSig}
 L: 1/8
-K: C
+K: C${clefTag}
 ${selectedMusic}
 `;
-
-  renderAndPlay(abcString, "paper", "#audio-controls", inst.midi, totalTranspose);
+renderAndPlay(abcString, "paper", "#audio-controls", inst.midi, totalTranspose, inst.clef === "bass");
 }
-
-function renderAndPlay(abcString, paperId, audioContainerId, midiProgram, transposeSemitones) {
+function renderAndPlay(abcString, paperId, audioContainerId, midiProgram, transposeSemitones, isBass = false) {
   const visualObj = ABCJS.renderAbc(paperId, abcString, {
     responsive: "resize",
     visualTranspose: transposeSemitones
@@ -469,13 +487,14 @@ function renderAndPlay(abcString, paperId, audioContainerId, midiProgram, transp
       displayRestart: true,
       displayProgress: true
     });
-
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    const audioContext = new AudioCtx();
-    if (audioContext.state === 'suspended') {
-      audioContext.resume();
-    }
-
+if (!window.sharedAudioCtx) {
+  window.sharedAudioCtx = new AudioCtx();
+}
+const audioContext = window.sharedAudioCtx;
+if (audioContext.state === 'suspended') {
+  audioContext.resume();
+}
     const createSynth = new ABCJS.synth.CreateSynth();
     createSynth.init({
       audioContext: audioContext,
@@ -483,13 +502,17 @@ function renderAndPlay(abcString, paperId, audioContainerId, midiProgram, transp
       options: {
         soundFontUrl: "./sfx/",
         program: midiProgram,
-        midiTranspose: transposeSemitones
+        midiTranspose: transposeSemitones,
+        soundFontVolumeMultiplier: isBass ? 6 : 2
+
       }
     }).then(() => {
       synthControl.setTune(visualObj[0], false, {
         soundFontUrl: "./sfx/",
         program: midiProgram,
-        midiTranspose: transposeSemitones
+        midiTranspose: transposeSemitones,
+        soundFontVolumeMultiplier: isBass ? 6 : 2
+
       });
     }).catch(err => {
       console.error("Eroare audio:", err);
@@ -848,4 +871,267 @@ function downloadScorePNG() {
     document.body.removeChild(a);
   };
   img.src = url;
+}
+// ==========================================
+// MODUL: CLAVIATURA INTERACTIVA & ARANJOR AI
+// ==========================================
+let recordedNotes = [];
+
+const pianoKeysData = [
+  // Octava de jos (stanga -1 octava)
+  { label: 'Do0', abc: 'C,', type: 'white', midi: 48 },
+  { label: 'Do#0', abc: '^C,', type: 'black', midi: 49 },
+  { label: 'Re0', abc: 'D,', type: 'white', midi: 50 },
+  { label: 'Re#0', abc: '^D,', type: 'black', midi: 51 },
+  { label: 'Mi0', abc: 'E,', type: 'white', midi: 52 },
+  { label: 'Fa0', abc: 'F,', type: 'white', midi: 53 },
+  { label: 'Fa#0', abc: '^F,', type: 'black', midi: 54 },
+  { label: 'Sol0', abc: 'G,', type: 'white', midi: 55 },
+  { label: 'Sol#0', abc: '^G,', type: 'black', midi: 56 },
+  { label: 'La0', abc: 'A,', type: 'white', midi: 57 },
+  { label: 'Sib0', abc: '_B,', type: 'black', midi: 58 },
+  { label: 'Si0', abc: 'B,', type: 'white', midi: 59 },
+  // Octava centrala
+  { label: 'Do', abc: 'C', type: 'white', midi: 60 },
+  { label: 'Do#', abc: '^C', type: 'black', midi: 61 },
+  { label: 'Re', abc: 'D', type: 'white', midi: 62 },
+  { label: 'Re#', abc: '^D', type: 'black', midi: 63 },
+  { label: 'Mi', abc: 'E', type: 'white', midi: 64 },
+  { label: 'Fa', abc: 'F', type: 'white', midi: 65 },
+  { label: 'Fa#', abc: '^F', type: 'black', midi: 66 },
+  { label: 'Sol', abc: 'G', type: 'white', midi: 67 },
+  { label: 'Sol#', abc: '^G', type: 'black', midi: 68 },
+  { label: 'La', abc: 'A', type: 'white', midi: 69 },
+  { label: 'Sib', abc: '_B', type: 'black', midi: 70 },
+  { label: 'Si', abc: 'B', type: 'white', midi: 71 },
+  // Octava 2
+  { label: 'Do2', abc: 'c', type: 'white', midi: 72 },
+  { label: 'Do#2', abc: '^c', type: 'black', midi: 73 },
+  { label: 'Re2', abc: 'd', type: 'white', midi: 74 },
+  { label: 'Re#2', abc: '^d', type: 'black', midi: 75 },
+  { label: 'Mi2', abc: 'e', type: 'white', midi: 76 },
+  { label: 'Fa2', abc: 'f', type: 'white', midi: 77 },
+  { label: 'Fa#2', abc: '^f', type: 'black', midi: 78 },
+  { label: 'Sol2', abc: 'g', type: 'white', midi: 79 },
+  { label: 'Sol#2', abc: '^g', type: 'black', midi: 80 },
+  { label: 'La2', abc: 'a', type: 'white', midi: 81 },
+  { label: 'Sib2', abc: '_b', type: 'black', midi: 82 },
+  { label: 'Si2', abc: 'b', type: 'white', midi: 83 },
+  // Octava de sus (dreapta +1 octava)
+  { label: 'Do3', abc: "c'", type: 'white', midi: 84 },
+  { label: 'Do#3', abc: "^c'", type: 'black', midi: 85 },
+  { label: 'Re3', abc: "d'", type: 'white', midi: 86 },
+  { label: 'Re#3', abc: "^d'", type: 'black', midi: 87 },
+  { label: 'Mi3', abc: "e'", type: 'white', midi: 88 },
+  { label: 'Fa3', abc: "f'", type: 'white', midi: 89 },
+  { label: 'Fa#3', abc: "^f'", type: 'black', midi: 90 },
+  { label: 'Sol3', abc: "g'", type: 'white', midi: 91 },
+  { label: 'Sol#3', abc: "^g'", type: 'black', midi: 92 },
+  { label: 'La3', abc: "a'", type: 'white', midi: 93 },
+  { label: 'Sib3', abc: "_b'", type: 'black', midi: 94 },
+  { label: 'Si3', abc: "b'", type: 'white', midi: 95 }
+];
+
+function openPianoStudio() {
+  switchScreen('piano-screen');
+  buildPianoUI();
+  updatePianoScore();
+  setTimeout(() => {
+    const container = document.getElementById('interactive-piano');
+    if (container) container.scrollLeft = 350;
+  }, 50);
+}
+
+function buildPianoUI() {
+  const container = document.getElementById('interactive-piano');
+  if (!container || container.innerHTML.trim() !== '') return;
+
+  let isDragging = false;
+  let startX = 0;
+
+  container.addEventListener('touchstart', (e) => {
+    isDragging = false;
+    startX = e.touches[0].clientX;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (Math.abs(e.touches[0].clientX - startX) > 10) {
+      isDragging = true;
+    }
+  }, { passive: true });
+
+  pianoKeysData.forEach(k => {
+    const btn = document.createElement('div');
+    btn.className = k.type === 'white' ? 'piano-key-white' : 'piano-key-black';
+    if (k.type === 'white') btn.innerText = k.label;
+    btn.onclick = () => {
+      if (!isDragging) handlePianoPress(k);
+    };
+    container.appendChild(btn);
+  });
+}
+
+let pianoAudioCtx = null;
+
+function playSinglePreviewNote(midiNote) {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+  if (!pianoAudioCtx) {
+    pianoAudioCtx = new AudioCtx();
+  }
+  if (pianoAudioCtx.state === 'suspended') {
+    pianoAudioCtx.resume();
+  }
+
+  const osc = pianoAudioCtx.createOscillator();
+  const gain = pianoAudioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = 440 * Math.pow(2, (midiNote - 69) / 12);
+  gain.gain.setValueAtTime(0.3, pianoAudioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, pianoAudioCtx.currentTime + 0.35);
+  osc.connect(gain);
+  gain.connect(pianoAudioCtx.destination);
+  osc.start();
+  osc.stop(pianoAudioCtx.currentTime + 0.35);
+}
+function handlePianoPress(keyObj) {
+  playSinglePreviewNote(keyObj.midi);
+  const len = parseInt(document.getElementById('piano-note-len').value || 2);
+  recordedNotes.push({ abc: keyObj.abc, len: len, isRest: false });
+  updatePianoScore();
+}
+
+function addPianoRest() {
+  const len = parseInt(document.getElementById('piano-note-len').value || 2);
+  recordedNotes.push({ abc: 'z', len: len, isRest: true });
+  updatePianoScore();
+}
+
+function undoPianoNote() {
+  recordedNotes.pop();
+  updatePianoScore();
+}
+
+function clearPianoNotes() {
+  recordedNotes = [];
+  updatePianoScore();
+}
+function stylizeMelody(notes, style) {
+  if (notes.length === 0) return "z8 |]";
+  const stepUp = {
+    'C,': 'D,', '^C,': 'D,', 'D,': 'E,', '^D,': 'E,', 'E,': 'F,', 'F,': 'G,', '^F,': 'G,',
+    'G,': 'A,', '^G,': 'A,', 'A,': 'B,', '_B,': 'B,', 'B,': 'C',
+    'C': 'D', '^C': 'D', 'D': 'E', '^D': 'E', 'E': 'F', 'F': 'G', '^F': 'G',
+    'G': 'A', '^G': 'A', 'A': 'B', '_B': 'B', 'B': 'c',
+    'c': 'd', '^c': 'd', 'd': 'e', '^d': 'e', 'e': 'f', 'f': 'g', '^f': 'g',
+    'g': 'a', '^g': 'a', 'a': 'b', '_b': 'b', 'b': "c'",
+    "c'": "d'", "^c'": "d'", "d'": "e'", "^d'": "e'", "e'": "f'", "f'": "g'", "^f'": "g'",
+    "g'": "a'", "^g'": "a'", "a'": "b'", "_b'": "b'", "b'": "c''"
+  };
+  const stepDown = {
+    'C,': 'B,,', '^C,': 'C,', 'D,': 'C,', '^D,': 'D,', 'E,': 'D,', 'F,': 'E,', '^F,': 'F,',
+    'G,': 'F,', '^G,': 'G,', 'A,': 'G,', '_B,': 'A,', 'B,': 'A,',
+    'C': 'B,', '^C': 'C', 'D': 'C', '^D': 'D', 'E': 'D', 'F': 'E', '^F': 'F',
+    'G': 'F', '^G': 'G', 'A': 'G', '_B': 'A', 'B': 'A',
+    'c': 'B', '^c': 'c', 'd': 'c', '^d': 'd', 'e': 'd', 'f': 'e', '^f': 'f',
+    'g': 'f', '^g': 'g', 'a': 'g', '_b': 'a', 'b': 'a',
+    "c'": 'b', "^c'": "c'", "d'": "c'", "^d'": "d'", "e'": "d'", "f'": "e'", "^f'": "f'",
+    "g'": "f'", "^g'": "g'", "a'": "g'", "_b'": "a'", "b'": "a'"
+  };
+
+
+  let abcTokens = [];
+  notes.forEach((n, idx) => {
+    const base = n.abc;
+    const dur = n.len;
+    const up = stepUp[base] || base;
+    const down = stepDown[base] || base;
+
+    if (n.isRest || style === 'original') {
+      abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+      return;
+    }
+
+    if (style === 'jazz') {
+      if (dur >= 2 && idx % 2 === 0) {
+        abcTokens.push(`${down}1 ${base}${dur - 1 > 1 ? dur - 1 : ''}`);
+      } else {
+        abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+      }
+    } else if (style === 'blues') {
+      if (dur >= 2) {
+        abcTokens.push(`(3${base}${base}${up}`);
+
+      } else {
+        abcTokens.push(`${base}`);
+      }
+    } else if (style === 'gospel') {
+      if (dur >= 2) {
+        abcTokens.push(`(3${down}${base}${up} ${base}${dur - 1 > 1 ? dur - 1 : ''}`);
+      } else {
+        abcTokens.push(`{${down}}${base}`);
+      }
+
+    } else if (style === 'lautaresc') {
+      if (dur >= 2) {
+        abcTokens.push(`(3${base}${up}${base} ${base}${dur - 1 > 1 ? dur - 1 : ''}`);
+      } else {
+        abcTokens.push(`{${up}}${base}`);
+      }
+    } else if (style === 'sarbeasca') {
+      if (dur >= 2) {
+        abcTokens.push(`${base}1 ${up}1`);
+      } else {
+        abcTokens.push(`${base}`);
+      }
+    } else if (style === 'balada') {
+      if (dur >= 4) {
+        abcTokens.push(`${base}2 ${up}1 ${base}1`);
+      } else {
+        abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+      }
+    } else if (style === 'clasic') {
+      if (dur >= 2 && idx % 2 === 1) {
+        abcTokens.push(`${base}1 ${down}1`);
+      } else {
+        abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+      }
+    }
+  });
+
+  let result = "";
+  let beatCount = 0;
+  notes.forEach((n, i) => {
+    result += abcTokens[i] + " ";
+    beatCount += n.len;
+    if (beatCount >= 8) {
+      result += "| ";
+      beatCount = 0;
+    }
+  });
+  if (!result.trim().endsWith("|")) result += "|]";
+  return result;
+}
+
+
+function updatePianoScore() {
+  const targetKey = document.getElementById('piano-target-key')?.value || 'C';
+  const instKey = document.getElementById('piano-instrument')?.value || 'piano';
+  const styleMode = document.getElementById('piano-style-mode')?.value || 'original';
+  const inst = instrumentConfig[instKey] || instrumentConfig.piano;
+
+  const totalTranspose = (keyOffsets[targetKey] || 0) + inst.transpose;
+  const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : "";
+  const bodyAbc = stylizeMelody(recordedNotes, styleMode);
+
+  const abcString = `
+X: 1
+T: Melodie - ${styleMode.toUpperCase()} (${inst.name} - ${targetKey})
+M: 4/4
+L: 1/8
+K: C${clefTag}
+${bodyAbc}
+`;
+
+  renderAndPlay(abcString, "piano-paper", "#piano-audio-controls", inst.midi, totalTranspose, inst.clef === "bass");
 }

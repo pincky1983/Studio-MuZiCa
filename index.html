@@ -91,6 +91,12 @@
         <h2>Scanare AI</h2>
         <p>Poză / PDF -> Transpunere</p>
       </button>
+            <button class="menu-card piano-studio" onclick="openPianoStudio()">
+        <span class="icon">🎹</span>
+        <h2>Claviatură AI</h2>
+        <p>Compune, Transpune & Stilizează</p>
+      </button>
+
     </div>
   </div>
 
@@ -239,6 +245,16 @@
         </select>
 
       </div>
+      <div class="control-group">
+        <label>Registru (Octavă):</label>
+        <select id="octave-shift">
+          <option value="-24">-2 Octave (Foarte jos)</option>
+          <option value="-12">-1 Octavă (Mai jos)</option>
+          <option value="0" selected>Normal (Standard)</option>
+          <option value="12">+1 Octavă (Mai sus)</option>
+          <option value="24">+2 Octave (Foarte sus)</option>
+        </select>
+      </div>
 
       <button class="generate-btn" onclick="generateMusic()">Generează Modulația</button>
     </div>
@@ -319,6 +335,86 @@
 
     <div id="preview-container">
       <img id="image-preview" style="display:none; max-width:100%; border-radius:8px; margin-top:15px;" />
+    </div>
+  </div>
+  <!-- ECRAN 4: CLAVIATURA INTERACTIVA & ARANJOR AI -->
+  <div id="piano-screen" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goHome()">← Înapoi</button>
+      <h2>Claviatură & Aranjor AI</h2>
+    </div>
+
+    <div class="controls-panel">
+      <div class="control-group">
+        <label>Durată notă:</label>
+        <select id="piano-note-len">
+          <option value="1">Optime (♪)</option>
+          <option value="2" selected>Pătrime (♩)</option>
+          <option value="4">Doime (𝅗𝅥)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 5px;">
+        <button class="back-btn" style="flex:1; background:#2c2c2c;" onclick="addPianoRest()">➕ Pauză</button>
+        <button class="back-btn" style="flex:1; background:#8b2635;" onclick="undoPianoNote()">⌫ Șterge</button>
+        <button class="back-btn" style="flex:1; background:#444;" onclick="clearPianoNotes()">🗑 Reset</button>
+      </div>
+    </div>
+
+    <div id="interactive-piano" class="piano-container"></div>
+
+    <div class="controls-panel" style="margin-top: 12px;">
+      <div class="control-group">
+        <label>Transpune în Gama:</label>
+        <select id="piano-target-key" onchange="updatePianoScore()">
+          <option value="C" selected>Do Major / La minor (Original)</option>
+          <option value="G">Sol Major (G)</option>
+          <option value="D">Re Major (D)</option>
+          <option value="A">La Major (A)</option>
+          <option value="E">Mi Major (E)</option>
+          <option value="F">Fa Major (F)</option>
+          <option value="Bb">Si♭ Major (B♭)</option>
+          <option value="Eb">Mi♭ Major (E♭)</option>
+          <option value="Cm">Do minor (Cm)</option>
+          <option value="Dm">Re minor (Dm)</option>
+          <option value="Em">Mi minor (Em)</option>
+          <option value="Gm">Sol minor (Gm)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Instrument:</label>
+        <select id="piano-instrument" onchange="updatePianoScore()">
+          <option value="piano">Pian Acustic</option>
+          <option value="accordion">Acordeon</option>
+          <option value="trumpet_bb">Trompetă Si♭</option>
+          <option value="alto_sax">Saxofon Alto</option>
+          <option value="clarinet">Clarinet</option>
+          <option value="violin">Vioară</option>
+          <option value="pan_flute">Nai</option>
+          <option value="contrabass">Contrabas</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Interpretare în Stilul:</label>
+        <select id="piano-style-mode" onchange="updatePianoScore()">
+          <option value="original" selected>🎵 Melodia Mea (Originală)</option>
+          <option value="jazz">🎷 Jazz (Swing & Cromatisme)</option>
+          <option value="blues">🎸 Blues (Blues Shuffle & Triolete)</option>
+          <option value="gospel">🎹 Gospel (Pasaje Expresive & Triolete)</option>
+
+          <option value="lautaresc">🪗 Lăutăresc (Triolete & Ornamentații)</option>
+          <option value="sarbeasca">🎺 Sârbească / Folclor (Pasaje Rapide)</option>
+          <option value="balada">🎹 Baladă (Arpegii & Liric)</option>
+          <option value="clasic">🎻 Clasic (Variații & Broderii)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="piano-audio-controls" style="margin-top: 12px;"></div>
+    <div id="sheet-music-container">
+      <div id="piano-paper"></div>
     </div>
   </div>
 
