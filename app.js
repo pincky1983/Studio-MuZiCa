@@ -1135,3 +1135,276 @@ ${bodyAbc}
 
   renderAndPlay(abcString, "piano-paper", "#piano-audio-controls", inst.midi, totalTranspose, inst.clef === "bass");
 }
+// ============================================================================
+// MODUL CAPTARE MICROFON OFFLINE (AUTOCORELAȚIE + DETECȚIE GAMĂ)
+// ============================================================================
+
+let micStream = null;
+let micAnalyser = null;
+let micDataArray = null;
+let isMicRecording = false;
+let micAnimationFrame = null;
+
+let lastDetectedMidi = null;
+let sameNoteFrameCount = 0;
+let lastNoteTimestamp = 0;
+let capturedMidiSequence = [];
+
+const MIDI_TO_ABC_NOTES = [
+  "C", "^C", "D", "^D", "E", "F", "^F", "G", "^G", "A", "^A", "B"
+];
+
+function midiToAbcNote(midiNumber) {
+  const pitchClass = midiNumber % 12;
+  const octave = Math.floor(midiNumber / 12) - 1;
+  const noteName = MIDI_TO_ABC_NOTES[pitchClass];
+
+  if (octave === 4) return noteName;
+  if (octave === 5) return noteName.toLowerCase();
+  if (octave > 5) return noteName.toLowerCase() + "'".repeat(octave - 5);
+  return noteName + ",".repeat(4 - octave);
+}
+
+// Algoritm Autocorelație (100% offline, fără internet)
+function autoCorrelate(buf, sampleRate) {
+  let SIZE = buf.length;
+  let rms = 0;
+
+  for (let i = 0; i < SIZE; i++) {
+    const val = buf[i];
+    rms += val * val;
+  }
+  rms = Math.sqrt(rms / SIZE);
+
+  // Prag de liniște (ignoră zgomotul de fundal)
+  if (rms < 0.025) return -1;
+
+  let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+  for (let i = 0; i < SIZE / 2; i++) {
+    if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+  }
+  for (let i = 1; i < SIZE / 2; i++) {
+    if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+  }
+
+  buf = buf.slice(r1, r2);
+  SIZE = buf.length;
+
+  const c = new Array(SIZE).fill(0);
+  for (let i = 0; i < SIZE; i++) {
+    for (let j = 0; j < SIZE - i; j++) {
+      c[i] = c[i] + buf[j] * buf[j + i];
+    }
+  }
+
+  let d = 0;
+  while (c[d] > c[d + 1]) d++;
+  let maxval = -1, maxpos = -1;
+  for (let i = d; i < SIZE; i++) {
+    if (c[i] > maxval) {
+      maxval = c[i];
+      maxpos = i;
+    }
+  }
+  let T0 = maxpos;
+
+  // Interpolare parabolică pentru precizie fină
+  const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+  const a = (x1 + x3 - 2 * x2) / 2;
+  const b = (x3 - x1) / 2;
+  if (a) T0 = T0 - b / (2 * a);
+
+  return sampleRate / T0;
+}
+
+function frequencyToMidi(frequency) {
+  return Math.round(12 * (Math.log(frequency / 440) / Math.log(2))) + 69;
+}
+
+// Identificare automată a gamei (Major / minor) compatibilă cu opțiunile din #piano-target-key
+function detectMusicalKey(midiNotesArray) {
+  if (!midiNotesArray || midiNotesArray.length === 0) return "C";
+
+  const pitchCounts = new Array(12).fill(0);
+  midiNotesArray.forEach(midi => {
+    pitchCounts[midi % 12]++;
+  });
+
+  // Doar gamele disponibile în dropdown-ul #piano-target-key
+  const availableKeys = [
+    { name: "C",  root: 0,  intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { name: "G",  root: 7,  intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { name: "D",  root: 2,  intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { name: "A",  root: 9,  intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { name: "E",  root: 4,  intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { name: "F",  root: 5,  intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { name: "Bb", root: 10, intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { name: "Eb", root: 3,  intervals: [0, 2, 4, 5, 7, 9, 11] },
+    { name: "Cm", root: 0,  intervals: [0, 2, 3, 5, 7, 8, 10] },
+    { name: "Dm", root: 2,  intervals: [0, 2, 3, 5, 7, 8, 10] },
+    { name: "Em", root: 4,  intervals: [0, 2, 3, 5, 7, 8, 10] },
+    { name: "Gm", root: 7,  intervals: [0, 2, 3, 5, 7, 8, 10] }
+  ];
+
+  let bestKey = "C";
+  let bestScore = -999;
+
+  availableKeys.forEach(scale => {
+    let score = 0;
+    for (let note = 0; note < 12; note++) {
+      const interval = (note - scale.root + 12) % 12;
+      if (scale.intervals.includes(interval)) {
+        score += pitchCounts[note] * 2;
+        if (interval === 0) score += pitchCounts[note] * 1.5; // Tonică
+        if (interval === 7) score += pitchCounts[note] * 1.0; // Dominantă
+      } else {
+        score -= pitchCounts[note] * 3;
+      }
+    }
+    // Bonus dacă ultima notă cântată este tonica gamei
+    const lastPitchClass = midiNotesArray[midiNotesArray.length - 1] % 12;
+    if (lastPitchClass === scale.root) score += 2.5;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestKey = scale.name;
+    }
+  });
+
+  return bestKey;
+}
+
+// Analiză live a microfonului
+function processMicAudio() {
+  if (!isMicRecording) return;
+
+  micAnalyser.getFloatTimeDomainData(micDataArray);
+  const freq = autoCorrelate(micDataArray, window.sharedAudioCtx.sampleRate);
+  const statusEl = document.getElementById("mic-status");
+
+  // Domeniu vocal și instrumente solo (65 Hz = C2 -> 1400 Hz = F6)
+  if (freq > 65 && freq < 1400) {
+    const midi = frequencyToMidi(freq);
+    const abcNote = midiToAbcNote(midi);
+
+    if (midi === lastDetectedMidi) {
+      sameNoteFrameCount++;
+    } else {
+      lastDetectedMidi = midi;
+      sameNoteFrameCount = 1;
+    }
+
+    const now = Date.now();
+    // Confirmăm nota după 6 cadre stabile și min 260ms între note
+    if (sameNoteFrameCount === 6 && (now - lastNoteTimestamp > 260)) {
+      const noteLen = parseInt(document.getElementById("piano-note-len")?.value || "2", 10);
+
+      capturedMidiSequence.push(midi);
+      // Adăugăm nota direct în formatul nativ al claviaturii tale!
+      recordedNotes.push({ abc: abcNote, len: noteLen, isRest: false });
+
+      lastNoteTimestamp = now;
+
+      if (statusEl) {
+        statusEl.textContent = `🎵 Captat: ${abcNote} (${Math.round(freq)} Hz) | Note: ${recordedNotes.length}`;
+      }
+
+      // Desenăm live pe portativ folosind funcția ta existentă
+      const liveBody = stylizeMelody(recordedNotes, "original");
+      const liveAbc = `X: 1\nT: Înregistrare Live...\nM: 4/4\nL: 1/8\nK: C\n${liveBody}`;
+      if (typeof ABCJS !== "undefined") {
+        ABCJS.renderAbc("piano-paper", liveAbc, { responsive: "resize" });
+      }
+    }
+  }
+
+  micAnimationFrame = requestAnimationFrame(processMicAudio);
+}
+
+// Pornire / Oprire Înregistrare
+async function toggleMicRecording() {
+  const btn = document.getElementById("btn-mic-record");
+  const statusEl = document.getElementById("mic-status");
+
+  if (!isMicRecording) {
+    try {
+      if (!window.sharedAudioCtx) {
+        window.sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (window.sharedAudioCtx.state === "suspended") {
+        await window.sharedAudioCtx.resume();
+      }
+
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      });
+
+      const source = window.sharedAudioCtx.createMediaStreamSource(micStream);
+      micAnalyser = window.sharedAudioCtx.createAnalyser();
+      micAnalyser.fftSize = 2048;
+      micDataArray = new Float32Array(micAnalyser.fftSize);
+      source.connect(micAnalyser);
+
+      // Resetăm notele pentru o înregistrare nouă
+      recordedNotes = [];
+      capturedMidiSequence = [];
+      lastDetectedMidi = null;
+      sameNoteFrameCount = 0;
+      isMicRecording = true;
+
+      btn.textContent = "⏹️ Oprește Înregistrarea";
+      btn.style.background = "#2a9d8f";
+      if (statusEl) statusEl.textContent = "🎙️ Ascult... Cântă clar notă cu notă!";
+
+      processMicAudio();
+    } catch (err) {
+      console.error("Eroare microfon:", err);
+      if (statusEl) {
+        statusEl.textContent = "❌ Acces refuzat la microfon. Verifică permisiunile (HTTPS).";
+      }
+    }
+  } else {
+    isMicRecording = false;
+    if (micAnimationFrame) cancelAnimationFrame(micAnimationFrame);
+    if (micStream) {
+      micStream.getTracks().forEach(track => track.stop());
+      micStream = null;
+    }
+
+    btn.textContent = "🎤 Înregistrează (Microfon)";
+    btn.style.background = "#d62828";
+
+    if (capturedMidiSequence.length === 0) {
+      if (statusEl) statusEl.textContent = "⚠️ Nu s-a detectat nicio notă. Încearcă mai aproape de microfon.";
+      updatePianoScore();
+      return;
+    }
+
+    // 1. Detectăm gama automat
+    const detectedKey = detectMusicalKey(capturedMidiSequence);
+
+    // 2. Selectăm gama detectată în #piano-target-key
+    const targetKeySelect = document.getElementById("piano-target-key");
+    if (targetKeySelect) {
+      targetKeySelect.value = detectedKey;
+    }
+
+    if (statusEl) {
+      statusEl.innerHTML = `✅ Captate <b>${recordedNotes.length} note</b> | Gamă detectată: <b>${detectedKey}</b>`;
+    }
+
+    // 3. Apelăm updatePianoScore() - activează automat transpunerea, instrumentul și stilurile!
+    updatePianoScore();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const micBtn = document.getElementById("btn-mic-record");
+  if (micBtn) {
+    micBtn.addEventListener("click", toggleMicRecording);
+  }
+});
