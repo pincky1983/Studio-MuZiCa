@@ -495,6 +495,12 @@ const audioContext = window.sharedAudioCtx;
 if (audioContext.state === 'suspended') {
   audioContext.resume();
 }
+  // Coborâm cu 1 octavă sunetul MIDI pentru Sax Alto (65) și Sax Tenor (66)
+  // ca să sune în registrul lor real, cald, fără să afectăm partitura scrisă
+  const audioTranspose = (midiProgram === 65 || midiProgram === 66)
+    ? transposeSemitones - 12
+    : transposeSemitones;
+
     const createSynth = new ABCJS.synth.CreateSynth();
     createSynth.init({
       audioContext: audioContext,
@@ -502,16 +508,16 @@ if (audioContext.state === 'suspended') {
       options: {
         soundFontUrl: "./sfx/",
         program: midiProgram,
-        midiTranspose: transposeSemitones,
-        soundFontVolumeMultiplier: isBass ? 6 : 2
+        midiTranspose: audioTranspose,
+        soundFontVolumeMultiplier: isBass ? 9 : 4.5
 
       }
     }).then(() => {
       synthControl.setTune(visualObj[0], false, {
         soundFontUrl: "./sfx/",
         program: midiProgram,
-        midiTranspose: transposeSemitones,
-        soundFontVolumeMultiplier: isBass ? 6 : 2
+        midiTranspose: audioTranspose,
+        soundFontVolumeMultiplier: isBass ? 9 : 4.5
 
       });
     }).catch(err => {
@@ -662,9 +668,9 @@ let masterVolume = parseFloat(localStorage.getItem('studio_volume') ?? 0.8);
   }
 })();
 
-function updateMasterVolume(val) {
-  masterVolume = val / 100;
-  localStorage.setItem('studio_volume', masterVolume);
+  function updateMasterVolume(val) {
+  masterVolume = (val / 100) * 2.2;
+  localStorage.setItem('studio_volume', val / 100);
 
   const volValue = document.getElementById('vol-value');
   const volIcon = document.getElementById('vol-icon');
@@ -680,7 +686,7 @@ function updateMasterVolume(val) {
 
   // Actualizează eventuale elemente HTML <audio>
   document.querySelectorAll('audio').forEach(el => {
-    el.volume = masterVolume;
+    el.volume = Math.min(1, masterVolume);
   });
 }
 
