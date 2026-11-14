@@ -1206,7 +1206,7 @@ function stylizeMelody(notes, style) {
     "c'": 'b', "^c'": "c'", "d'": "c'", "^d'": "d'", "e'": "d'", "f'": "e'", "^f'": "f'",
     "g'": "f'", "^g'": "g'", "a'": "g'", "_b'": "a'", "b'": "a'"
   }
-      let abcTokens = [];
+        let abcTokens = [];
     notes.forEach((n, idx) => {
         const base = n.abc;
         const dur = n.len;
@@ -1219,49 +1219,72 @@ function stylizeMelody(notes, style) {
             return;
         }
 
-        // Toate stilurile non-original folosesc variante SLOW & COLORATURĂ LIRICĂ
-        if (style === 'jazz' || style === 'blues') {
+        // Nota originală (base) rămâne MEREU pe timpul principal pentru a păstra 100% melodia!
+        if (style === 'jazz') {
+            // Jazz Slow Ballad: apogiaturi cromatice + legato
             if (dur >= 4) {
-                abcTokens.push(`(${down}${base} (3${up}${base}${down} ${base}${dur - 2})`);
+                abcTokens.push(`({_${base}}${base}2 ${up}1 ${down}1)`);
             } else if (dur >= 2) {
-                abcTokens.push(`({${down}}${base}1 ${up}${dur - 1})`);
+                abcTokens.push(`({_${base}}${base}${dur})`);
             } else {
-                abcTokens.push(`{${down}}${base}`);
+                abcTokens.push(idx % 2 === 1 ? `{_${base}}${base}` : base);
             }
-        } else if (style === 'gospel' || style === 'balada') {
+        } else if (style === 'blues') {
+            // Slow Blues: blue-note slides & tenuto
             if (dur >= 4) {
-                abcTokens.push(`(!mordent!${base}2 (3${up}${base}${down} ${base}${dur - 3})`);
+                abcTokens.push(`(!tenuto!{_${up}}${base}3 ${down}1)`);
             } else if (dur >= 2) {
-                abcTokens.push(`({${down}${up}}${base}${dur})`);
+                abcTokens.push(`(!tenuto!{_${base}}${base}${dur})`);
             } else {
-                abcTokens.push(`{${down}}${base}`);
+                abcTokens.push(idx % 3 === 1 ? `{_${up}}${base}` : base);
             }
-        } else if (style === 'lautaresc' || style === 'folclor') {
+        } else if (style === 'gospel') {
+            // Slow Gospel / Soul: apogiaturi duble calde + urcare expresivă
             if (dur >= 4) {
-                abcTokens.push(`(!trill!${base}1 (3${up}${base}${down} ${down}1 ${base}${dur - 3})`);
+                abcTokens.push(`({${down}${base}}${base}2 ${base}1 ${up}1)`);
             } else if (dur >= 2) {
-                abcTokens.push(`({${up}${base}${down}}${base}${dur})`);
+                abcTokens.push(`({${down}${base}}${base}${dur})`);
             } else {
-                abcTokens.push(`{${up}}${base}`);
+                abcTokens.push(idx % 2 === 0 ? `{${down}}${base}` : base);
+            }
+        } else if (style === 'lautaresc') {
+            // Doină Lăutărească Lentă: triluri + broderii balcanice bogate
+            if (dur >= 4) {
+                abcTokens.push(`(!trill!${base}2 {${up}${base}${down}}${base}1 ${down}1)`);
+            } else if (dur >= 2) {
+                abcTokens.push(`(!mordent!{${up}${base}}${base}${dur})`);
+            } else {
+                abcTokens.push(`{${up}${down}}${base}`);
             }
         } else if (style === 'sarbeasca') {
-            if (dur >= 2) {
-                abcTokens.push(`((3${base}${up}${base} ${down}${dur - 1})`);
-            } else {
-                abcTokens.push(`{${up}}${base}`);
-            }
-        } else {
-            // Clasic / Orice alt stil -> Coloratură lirică cantabile
+            // Folclor / Baladă Populară Lentă: apogiaturi de sus + mordent pastoral
             if (dur >= 4) {
-                abcTokens.push(`(!turn!${base}2 ${up}1 ${down}1 ${base}${dur - 4 > 0 ? dur - 4 : ''})`);
+                abcTokens.push(`(!lowermordent!${base}2 ${up}1 ${base}1)`);
             } else if (dur >= 2) {
-                abcTokens.push(`({${up}}${base}1 ${down}${dur - 1})`);
+                abcTokens.push(`({${up}}${base}${dur})`);
+            } else {
+                abcTokens.push(idx % 2 === 0 ? `{${up}}${base}` : base);
+            }
+        } else if (style === 'balada') {
+            // Baladă Lirică: grupete romantice & frazare cantabilă
+            if (dur >= 4) {
+                abcTokens.push(`(!turn!${base}3 ${up}1)`);
+            } else if (dur >= 2) {
+                abcTokens.push(`(${base}${dur - 1} ${up}1)`);
             } else {
                 abcTokens.push(`${base}`);
             }
+        } else {
+            // Clasic (Adagio Cantabile): ornamente clasice curate
+            if (dur >= 4) {
+                abcTokens.push(`(!trill!${base}3 ${down}1)`);
+            } else if (dur >= 2) {
+                abcTokens.push(`(!turn!${base}${dur})`);
+            } else {
+                abcTokens.push(idx % 3 === 0 ? `{${up}}${base}` : base);
+            }
         }
 
-        // Adăugăm fermata expresivă pe ultima notă în modul Slow
         if (isLast && abcTokens.length > 0) {
             abcTokens[abcTokens.length - 1] = `!fermata!${abcTokens[abcTokens.length - 1]}`;
         }
@@ -1288,21 +1311,36 @@ function updatePianoScore() {
 
     const totalTranspose = (keyOffsets[targetKey] || 0) + inst.transpose;
     const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : "";
+
+    const slowTempos = {
+        original: 96,
+        jazz: 66,
+        blues: 58,
+        gospel: 64,
+        lautaresc: 54,
+        sarbeasca: 68,
+        balada: 60,
+        clasic: 66
+    };
+
+    const bpm = slowTempos[styleMode] || 62;
     const isSlowStyle = styleMode !== 'original';
-    const tempoTag = isSlowStyle ? "\nQ: 1/4=62" : "\nQ: 1/4=96";
-    const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - SLOW COLORATURĂ` : "ORIGINAL";
+    const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - SLOW COLORATURĂ (${bpm} BPM)` : "ORIGINAL";
     const bodyAbc = stylizeMelody(recordedNotes, styleMode);
 
     const abcString = `
 X: 1
 T: Melodie - ${styleLabel} (${inst.name} - ${targetKey})
 M: 4/4
-L: 1/8${tempoTag}
+L: 1/8
+Q: 1/4=${bpm}
 K: C${clefTag}
 ${bodyAbc}
 `;
+
     renderAndPlay(abcString, "piano-paper", "#piano-audio-controls", inst.midi, totalTranspose, inst.clef === "bass");
 }
+
 // ============================================================================
 // MODUL CAPTARE MICROFON OFFLINE (AUTOCORELAȚIE + DETECȚIE GAMĂ)
 // ============================================================================
