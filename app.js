@@ -1206,7 +1206,7 @@ function stylizeMelody(notes, style) {
     "c'": 'b', "^c'": "c'", "d'": "c'", "^d'": "d'", "e'": "d'", "f'": "e'", "^f'": "f'",
     "g'": "f'", "^g'": "g'", "a'": "g'", "_b'": "a'", "b'": "a'"
   }
-        let abcTokens = [];
+          let abcTokens = [];
     notes.forEach((n, idx) => {
         const base = n.abc;
         const dur = n.len;
@@ -1219,69 +1219,69 @@ function stylizeMelody(notes, style) {
             return;
         }
 
-        // Nota originală (base) rămâne MEREU pe timpul principal pentru a păstra 100% melodia!
+        // Regula de aur: nota ta originală (base) rămâne intactă pe timpul ei!
         if (style === 'jazz') {
-            // Jazz Slow Ballad: apogiaturi cromatice + legato
+            // Jazz Slow: apogiatură scurtă de jos pe timpii pari + legato
             if (dur >= 4) {
-                abcTokens.push(`({_${base}}${base}2 ${up}1 ${down}1)`);
-            } else if (dur >= 2) {
-                abcTokens.push(`({_${base}}${base}${dur})`);
+                abcTokens.push(`({${down}}${base}${dur - 1} ${up}1)`);
+            } else if (dur >= 2 && idx % 2 === 1) {
+                abcTokens.push(`{${down}}${base}${dur}`);
             } else {
-                abcTokens.push(idx % 2 === 1 ? `{_${base}}${base}` : base);
+                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
             }
         } else if (style === 'blues') {
-            // Slow Blues: blue-note slides & tenuto
+            // Slow Blues: accente tenuto + alunecare de sus pe notele lungi
             if (dur >= 4) {
-                abcTokens.push(`(!tenuto!{_${up}}${base}3 ${down}1)`);
-            } else if (dur >= 2) {
-                abcTokens.push(`(!tenuto!{_${base}}${base}${dur})`);
+                abcTokens.push(`(!tenuto!{${up}}${base}${dur - 1} ${down}1)`);
+            } else if (dur >= 2 && idx % 2 === 0) {
+                abcTokens.push(`!tenuto!${base}${dur}`);
             } else {
-                abcTokens.push(idx % 3 === 1 ? `{_${up}}${base}` : base);
+                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
             }
         } else if (style === 'gospel') {
-            // Slow Gospel / Soul: apogiaturi duble calde + urcare expresivă
+            // Slow Gospel: apogiatură caldă de jos + urcare la final de frază
             if (dur >= 4) {
-                abcTokens.push(`({${down}${base}}${base}2 ${base}1 ${up}1)`);
+                abcTokens.push(`({${down}}${base}${dur - 1} ${up}1)`);
             } else if (dur >= 2) {
-                abcTokens.push(`({${down}${base}}${base}${dur})`);
+                abcTokens.push(`{${down}}${base}${dur}`);
             } else {
-                abcTokens.push(idx % 2 === 0 ? `{${down}}${base}` : base);
+                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
             }
         } else if (style === 'lautaresc') {
-            // Doină Lăutărească Lentă: triluri + broderii balcanice bogate
+            // Doină Lăutărească: dublă apogiatură ornamentală (up-down) pe notele lungi
             if (dur >= 4) {
-                abcTokens.push(`(!trill!${base}2 {${up}${base}${down}}${base}1 ${down}1)`);
+                abcTokens.push(`({${up}${down}}${base}${dur - 1} ${down}1)`);
             } else if (dur >= 2) {
-                abcTokens.push(`(!mordent!{${up}${base}}${base}${dur})`);
+                abcTokens.push(`{${up}${down}}${base}${dur}`);
             } else {
-                abcTokens.push(`{${up}${down}}${base}`);
+                abcTokens.push(idx % 2 === 1 ? `{${up}}${base}` : `${base}`);
             }
         } else if (style === 'sarbeasca') {
-            // Folclor / Baladă Populară Lentă: apogiaturi de sus + mordent pastoral
+            // Folclor / Baladă Populară: apogiatură scurtă de sus (tip fluier/nai)
             if (dur >= 4) {
-                abcTokens.push(`(!lowermordent!${base}2 ${up}1 ${base}1)`);
-            } else if (dur >= 2) {
-                abcTokens.push(`({${up}}${base}${dur})`);
+                abcTokens.push(`({${up}}${base}${dur - 1} ${down}1)`);
+            } else if (dur >= 2 && idx % 2 === 0) {
+                abcTokens.push(`{${up}}${base}${dur}`);
             } else {
-                abcTokens.push(idx % 2 === 0 ? `{${up}}${base}` : base);
+                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
             }
         } else if (style === 'balada') {
-            // Baladă Lirică: grupete romantice & frazare cantabilă
+            // Baladă Lirică: frazare legato curată cu trecere lină pe ultima optime
             if (dur >= 4) {
-                abcTokens.push(`(!turn!${base}3 ${up}1)`);
-            } else if (dur >= 2) {
                 abcTokens.push(`(${base}${dur - 1} ${up}1)`);
+            } else if (dur >= 2) {
+                abcTokens.push(`(${base}${dur})`);
             } else {
                 abcTokens.push(`${base}`);
             }
         } else {
-            // Clasic (Adagio Cantabile): ornamente clasice curate
+            // Clasic (Adagio Cantabile): apogiatură clasică de sus pe timpii tari
             if (dur >= 4) {
-                abcTokens.push(`(!trill!${base}3 ${down}1)`);
-            } else if (dur >= 2) {
-                abcTokens.push(`(!turn!${base}${dur})`);
+                abcTokens.push(`({${up}}${base}${dur - 1} ${down}1)`);
+            } else if (dur >= 2 && idx % 3 === 0) {
+                abcTokens.push(`{${up}}${base}${dur}`);
             } else {
-                abcTokens.push(idx % 3 === 0 ? `{${up}}${base}` : base);
+                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
             }
         }
 
@@ -1302,6 +1302,7 @@ function stylizeMelody(notes, style) {
     });
     if (!result.trim().endsWith("|")) result += "|]";
     return result;
+
 }
 function updatePianoScore() {
     const targetKey = document.getElementById('piano-target-key')?.value || 'C';
