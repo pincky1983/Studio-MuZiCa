@@ -1179,131 +1179,209 @@ function undoPianoNote() {
   recordedNotes.pop();
   updatePianoScore();
 }
-
 function clearPianoNotes() {
   recordedNotes = [];
   updatePianoScore();
 }
 function stylizeMelody(notes, style) {
-  if (notes.length === 0) return "z8 |]";
-  const stepUp = {
-    'C,': 'D,', '^C,': 'D,', 'D,': 'E,', '^D,': 'E,', 'E,': 'F,', 'F,': 'G,', '^F,': 'G,',
-    'G,': 'A,', '^G,': 'A,', 'A,': 'B,', '_B,': 'B,', 'B,': 'C',
-    'C': 'D', '^C': 'D', 'D': 'E', '^D': 'E', 'E': 'F', 'F': 'G', '^F': 'G',
-    'G': 'A', '^G': 'A', 'A': 'B', '_B': 'B', 'B': 'c',
-    'c': 'd', '^c': 'd', 'd': 'e', '^d': 'e', 'e': 'f', 'f': 'g', '^f': 'g',
-    'g': 'a', '^g': 'a', 'a': 'b', '_b': 'b', 'b': "c'",
-    "c'": "d'", "^c'": "d'", "d'": "e'", "^d'": "e'", "e'": "f'", "f'": "g'", "^f'": "g'",
-    "g'": "a'", "^g'": "a'", "a'": "b'", "_b'": "b'", "b'": "c''"
-  };
-  const stepDown = {
-    'C,': 'B,,', '^C,': 'C,', 'D,': 'C,', '^D,': 'D,', 'E,': 'D,', 'F,': 'E,', '^F,': 'F,',
-    'G,': 'F,', '^G,': 'G,', 'A,': 'G,', '_B,': 'A,', 'B,': 'A,',
-    'C': 'B,', '^C': 'C', 'D': 'C', '^D': 'D', 'E': 'D', 'F': 'E', '^F': 'F',
-    'G': 'F', '^G': 'G', 'A': 'G', '_B': 'A', 'B': 'A',
-    'c': 'B', '^c': 'c', 'd': 'c', '^d': 'd', 'e': 'd', 'f': 'e', '^f': 'f',
-    'g': 'f', '^g': 'g', 'a': 'g', '_b': 'a', 'b': 'a',
-    "c'": 'b', "^c'": "c'", "d'": "c'", "^d'": "d'", "e'": "d'", "f'": "e'", "^f'": "f'",
-    "g'": "f'", "^g'": "g'", "a'": "g'", "_b'": "a'", "b'": "a'"
-  }
-          let abcTokens = [];
-    notes.forEach((n, idx) => {
-        const base = n.abc;
-        const dur = n.len;
-        const up = stepUp[base] || base;
-        const down = stepDown[base] || base;
-        const isLast = idx === notes.length - 1;
+    if (!notes || notes.length === 0) return "z8 | z8 |]";
 
-        if (n.isRest || style === 'original') {
-            abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
-            return;
+    // Hartă cromatică completă pentru a nu genera niciodată note false în afara gamei
+    const chromatic = ['C', '^C', 'D', '^D', 'E', 'F', '^F', 'G', '^G', 'A', '^A', 'B'];
+
+    function parseNote(abc) {
+        const m = abc.match(/^(\^|_)?([A-Ga-g])([',]*)$/);
+        if (!m) return { acc: '', letter: 'C', oct: 0 };
+        const acc = m[1] || '';
+        const raw = m[2];
+        const marks = m[3] || '';
+        let oct = raw === raw.toLowerCase() ? 1 : 0;
+        for (const ch of marks) {
+            if (ch === "'") oct++;
+            if (ch === ",") oct--;
+        }
+        return { acc, letter: raw.toUpperCase(), oct };
+    }
+
+    function buildNote(semitoneIndex, oct) {
+        while (semitoneIndex < 0) { semitoneIndex += 12; oct--; }
+        while (semitoneIndex >= 12) { semitoneIndex -= 12; oct++; }
+        const token = chromatic[semitoneIndex];
+        const acc = token.startsWith('^') ? '^' : '';
+        let letter = token.replace('^', '');
+        if (oct >= 1) {
+            letter = letter.toLowerCase() + "'".repeat(oct - 1);
+        } else if (oct < 0) {
+            letter = letter + ",".repeat(Math.abs(oct));
+        }
+        return acc + letter;
+    }
+
+    function getSemitone(abc) {
+        const p = parseNote(abc);
+        let idx = chromatic.indexOf(p.letter);
+        if (p.acc === '^') idx += 1;
+        if (p.acc === '_') idx -= 1;
+        return { semi: (idx + 12) % 12, oct: p.oct };
+    }
+
+    // Construiește acorduri Gospel bogate (Maj7, m7, 7, dim7) sub melodia principală
+    function buildGospelChord(melodyAbc, stepIndex) {
+        const { semi, oct } = getSemitone(melodyAbc);
+        const top = buildNote(semi, oct);
+        const mod = stepIndex % 4;
+
+        if (mod === 0) {
+            // Acord Major cu Septimă Mare (Maj7) - cald și solemn
+            return {
+                label: `"Cmaj7"`,
+                chord: `[${buildNote(semi - 12, oct)}${buildNote(semi - 8, oct)}${buildNote(semi - 5, oct)}${top}]`
+            };
+        } else if (mod === 1) {
+            // Acord Diminuat de pasaj (dim7) - tensiune expresivă Gospel
+            return {
+                label: `"C#dim7"`,
+                chord: `[${buildNote(semi - 9, oct)}${buildNote(semi - 6, oct)}${buildNote(semi - 3, oct)}${top}]`
+            };
+        } else if (mod === 2) {
+            // Acord Minor cu Septimă (m7) - profund și melodios
+            return {
+                label: `"Dm7"`,
+                chord: `[${buildNote(semi - 12, oct)}${buildNote(semi - 9, oct)}${buildNote(semi - 5, oct)}${top}]`
+            };
+        } else {
+            // Acord de Dominantă cu Septimă (G7) - rezolvare clasică Gospel
+            return {
+                label: `"G7"`,
+                chord: `[${buildNote(semi - 10, oct)}${buildNote(semi - 6, oct)}${buildNote(semi - 3, oct)}${top}]`
+            };
+        }
+    }
+
+    // Pas diatonic/cromatic sigur (în gamă, fără note false)
+    function stepSafe(abc, deltaSemitones) {
+        const { semi, oct } = getSemitone(abc);
+        return buildNote(semi + deltaSemitones, oct);
+    }
+
+    if (style === 'original') {
+        let res = "";
+        let b = 0;
+        notes.forEach(n => {
+            res += `${n.abc}${n.len > 1 ? n.len : ''} `;
+            b += n.len;
+            if (b >= 8) { res += "| "; b = 0; }
+        });
+        if (!res.trim().endsWith("|")) res += "|]";
+        return res;
+    }
+
+    let out = [];
+    for (let i = 0; i < notes.length; i++) {
+        const cur = notes[i];
+        const next = notes[i + 1] && !notes[i + 1].isRest ? notes[i + 1] : null;
+        const base = cur.abc;
+        const dur16 = cur.len * 2;
+        const nextNote = next ? next.abc : base;
+        const isLast = i === notes.length - 1;
+
+        // Calculăm trepte armonice sigure față de nota curentă
+        const upWhole = stepSafe(base, 2);     // secundă mare sus (în gamă)
+        const downWhole = stepSafe(base, -2);  // secundă mare jos (în gamă)
+        const downHalf = stepSafe(base, -1);   // sensibila de jos (semiton)
+        const thirdUp = stepSafe(base, 3);     // terță minoră sus
+
+        if (cur.isRest) {
+            out.push(`z${dur16 > 1 ? dur16 : ''}`);
+            continue;
         }
 
-        // Regula de aur: nota ta originală (base) rămâne intactă pe timpul ei!
-        if (style === 'jazz') {
-            // Jazz Slow: apogiatură scurtă de jos pe timpii pari + legato
-            if (dur >= 4) {
-                abcTokens.push(`({${down}}${base}${dur - 1} ${up}1)`);
-            } else if (dur >= 2 && idx % 2 === 1) {
-                abcTokens.push(`{${down}}${base}${dur}`);
+        if (style === 'gospel') {
+            // GOSPEL SOLEMN: Acorduri Maj7, dim7, m7 și 7 + simboluri deasupra portativului
+            const g = buildGospelChord(base, i);
+            if (dur16 >= 8) {
+                const g2 = buildGospelChord(upWhole, i + 1);
+                out.push(`${g.label}${g.chord}4 ${g2.label}${g2.chord}2 ${base}2`);
+            } else if (dur16 === 4) {
+                out.push(`${g.label}${g.chord}3 ${upWhole}1`);
             } else {
-                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+                out.push(i % 2 === 0 ? `${g.label}${g.chord}2` : `${base}2`);
+            }
+        } else if (style === 'jazz') {
+            // JAZZ SWING: Balans 3+1 + rezolvare prin sensibilă (fără note false)
+            if (dur16 >= 8) {
+                out.push(`(${base}3 ${upWhole}1 ${base}2 ${downHalf}1 ${nextNote}1)`);
+            } else if (dur16 === 4) {
+                out.push(`(${base}3 ${nextNote}1)`);
+            } else {
+                out.push(i % 2 === 1 ? `!>!${base}2` : `${base}2`);
             }
         } else if (style === 'blues') {
-            // Slow Blues: accente tenuto + alunecare de sus pe notele lungi
-            if (dur >= 4) {
-                abcTokens.push(`(!tenuto!{${up}}${base}${dur - 1} ${down}1)`);
-            } else if (dur >= 2 && idx % 2 === 0) {
-                abcTokens.push(`!tenuto!${base}${dur}`);
+            // BLUES SHUFFLE: Terță blues + accente tenuto
+            if (dur16 >= 8) {
+                out.push(`(!tenuto!${base}4 ${thirdUp}2 ${upWhole}1 ${base}1)`);
+            } else if (dur16 === 4) {
+                out.push(`(!tenuto!${base}3 ${upWhole}1)`);
             } else {
-                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
-            }
-        } else if (style === 'gospel') {
-            // Slow Gospel: apogiatură caldă de jos + urcare la final de frază
-            if (dur >= 4) {
-                abcTokens.push(`({${down}}${base}${dur - 1} ${up}1)`);
-            } else if (dur >= 2) {
-                abcTokens.push(`{${down}}${base}${dur}`);
-            } else {
-                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+                out.push(i % 2 === 0 ? `!tenuto!${base}2` : `${base}2`);
             }
         } else if (style === 'lautaresc') {
-            // Doină Lăutărească: dublă apogiatură ornamentală (up-down) pe notele lungi
-            if (dur >= 4) {
-                abcTokens.push(`({${up}${down}}${base}${dur - 1} ${down}1)`);
-            } else if (dur >= 2) {
-                abcTokens.push(`{${up}${down}}${base}${dur}`);
+            // LĂUTĂRESC / DOINĂ: Triluri + broderie pe secundă mare/sensibilă
+            if (dur16 >= 8) {
+                out.push(`(!trill!${base}4 ${upWhole}1 ${base}1 ${downHalf}1 ${nextNote}1)`);
+            } else if (dur16 === 4) {
+                out.push(`(!mordent!${base}2 ${upWhole}1 ${base}1)`);
             } else {
-                abcTokens.push(idx % 2 === 1 ? `{${up}}${base}` : `${base}`);
+                out.push(`({${upWhole}}${base}2)`);
             }
         } else if (style === 'sarbeasca') {
-            // Folclor / Baladă Populară: apogiatură scurtă de sus (tip fluier/nai)
-            if (dur >= 4) {
-                abcTokens.push(`({${up}}${base}${dur - 1} ${down}1)`);
-            } else if (dur >= 2 && idx % 2 === 0) {
-                abcTokens.push(`{${up}}${base}${dur}`);
+            // FOLCLOR / DOINĂ PASTORALĂ: Ritm punctat (1+3) în gamă
+            if (dur16 >= 8) {
+                out.push(`(!lowermordent!${base}3 ${upWhole}1 ${downWhole}1 ${base}3)`);
+            } else if (dur16 === 4) {
+                out.push(`(${base}1 ${upWhole}3)`);
             } else {
-                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+                out.push(`{${upWhole}}${base}2`);
             }
         } else if (style === 'balada') {
-            // Baladă Lirică: frazare legato curată cu trecere lină pe ultima optime
-            if (dur >= 4) {
-                abcTokens.push(`(${base}${dur - 1} ${up}1)`);
-            } else if (dur >= 2) {
-                abcTokens.push(`(${base}${dur})`);
+            // BALADĂ LIRICĂ: Legato cald și curgător
+            if (dur16 >= 8) {
+                out.push(`(${base}5 ${upWhole}1 ${base}2)`);
+            } else if (dur16 === 4) {
+                out.push(`(${base}3 ${upWhole}1)`);
             } else {
-                abcTokens.push(`${base}`);
+                out.push(`(${base}2)`);
             }
         } else {
-            // Clasic (Adagio Cantabile): apogiatură clasică de sus pe timpii tari
-            if (dur >= 4) {
-                abcTokens.push(`({${up}}${base}${dur - 1} ${down}1)`);
-            } else if (dur >= 2 && idx % 3 === 0) {
-                abcTokens.push(`{${up}}${base}${dur}`);
+            // CLASIC (Adagio Cantabile)
+            if (dur16 >= 8) {
+                out.push(`(!turn!${base}4 ${upWhole}2 ${base}2)`);
+            } else if (dur16 === 4) {
+                out.push(`(${base}2 ${upWhole}1 ${base}1)`);
             } else {
-                abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+                out.push(`${base}2`);
             }
         }
 
-        if (isLast && abcTokens.length > 0) {
-            abcTokens[abcTokens.length - 1] = `!fermata!${abcTokens[abcTokens.length - 1]}`;
+        if (isLast && out.length > 0) {
+            out[out.length - 1] = `!fermata!${out[out.length - 1]}`;
         }
-    });
+    }
 
     let result = "";
-    let beatCount = 0;
-    notes.forEach((n, i) => {
-        result += abcTokens[i] + " ";
-        beatCount += n.len;
-        if (beatCount >= 8) {
+    let count16 = 0;
+    notes.forEach((n, idx) => {
+        result += out[idx] + " ";
+        count16 += n.len * 2;
+        if (count16 >= 16) {
             result += "| ";
-            beatCount = 0;
+            count16 = 0;
         }
     });
     if (!result.trim().endsWith("|")) result += "|]";
     return result;
-
 }
+
 function updatePianoScore() {
     const targetKey = document.getElementById('piano-target-key')?.value || 'C';
     const instKey = document.getElementById('piano-instrument')?.value || 'piano';
@@ -1311,29 +1389,30 @@ function updatePianoScore() {
     const inst = instrumentConfig[instKey] || instrumentConfig.piano;
 
     const totalTranspose = (keyOffsets[targetKey] || 0) + inst.transpose;
-    const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : "";
+    const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : " clef=treble";
 
     const slowTempos = {
         original: 96,
-        jazz: 66,
-        blues: 58,
-        gospel: 64,
-        lautaresc: 54,
-        sarbeasca: 68,
+        jazz: 72,
+        blues: 62,
+        gospel: 68,
+        lautaresc: 56,
+        sarbeasca: 66,
         balada: 60,
         clasic: 66
     };
 
-    const bpm = slowTempos[styleMode] || 62;
+    const bpm = slowTempos[styleMode] || 64;
     const isSlowStyle = styleMode !== 'original';
-    const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - SLOW COLORATURĂ (${bpm} BPM)` : "ORIGINAL";
+    const unitLen = isSlowStyle ? "1/16" : "1/8";
+    const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - ARANJAMENT (${bpm} BPM)` : "ORIGINAL";
     const bodyAbc = stylizeMelody(recordedNotes, styleMode);
 
     const abcString = `
 X: 1
 T: Melodie - ${styleLabel} (${inst.name} - ${targetKey})
 M: 4/4
-L: 1/8
+L: ${unitLen}
 Q: 1/4=${bpm}
 K: C${clefTag}
 ${bodyAbc}
