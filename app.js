@@ -532,6 +532,78 @@ ${selectedMusic}
 `;
 renderAndPlay(abcString, "paper", "#audio-controls", inst.midi, totalTranspose, inst.clef === "bass");
 }
+function applyColoraturaEnhancements(abcBody) {
+    const useOrnaments = document.getElementById('opt-ornaments')?.checked;
+    const useDynamics = document.getElementById('opt-dynamics')?.checked;
+    const useHarmony = document.getElementById('opt-harmony')?.checked;
+
+    if (!useOrnaments && !useDynamics && !useHarmony) {
+        return abcBody;
+    }
+
+    let enhanced = abcBody;
+
+    // 1. Triluri & Apogiaturi AI
+    if (useOrnaments) {
+        const ornaments = ['!trill!', '!mordent!', '!turn!'];
+        let count = 0;
+        enhanced = enhanced.replace(/([A-Ga-g][',]?)([234])/g, (match, note, dur) => {
+            count++;
+            if (count % 3 === 1) {
+                const orn = ornaments[count % ornaments.length];
+                return `${orn}${note}${dur}`;
+            }
+            return match;
+        });
+    }
+
+    // 2. Dinamică & Fermata
+    if (useDynamics) {
+        const measures = enhanced.split('|');
+        for (let i = 0; i < measures.length; i++) {
+            let m = measures[i].trim();
+            if (!m) continue;
+            if (i === 0) {
+                m = `!mf! ${m}`;
+            } else if (i === Math.floor(measures.length / 2)) {
+                m = `!f! ${m}`;
+            } else if (i === measures.length - 2 || i === measures.length - 1) {
+                m = m.replace(/([A-Ga-g][',]?\d*)$/, '!fermata!!p!$1');
+            }
+            measures[i] = ` ${m} `;
+        }
+        enhanced = measures.join('|').trim();
+    }
+
+    // 3. Dublaj la Terță (2 Voci)
+    if (useHarmony) {
+        const scale = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        enhanced = enhanced.replace(/(\^|_|=)?([A-Ga-g])([',]?)(\d*)/g, (match, acc, noteChar, oct, dur) => {
+            const isLower = noteChar === noteChar.toLowerCase();
+            const upperChar = noteChar.toUpperCase();
+            const idx = scale.indexOf(upperChar);
+            if (idx === -1) return match;
+
+            let thirdIdx = (idx + 2) % 7;
+            let thirdChar = scale[thirdIdx];
+            let thirdOct = oct;
+
+            if (isLower) {
+                thirdChar = thirdChar.toLowerCase();
+                if (idx + 2 >= 7) thirdOct = (oct || '') + "'";
+            } else {
+                if (idx + 2 >= 7) {
+                    thirdChar = thirdChar.toLowerCase();
+                    thirdOct = oct.replace(',', '');
+                }
+            }
+            const prefix = acc || '';
+            return `[${prefix}${noteChar}${oct}${thirdChar}${thirdOct}]${dur}`;
+        });
+    }
+
+    return enhanced;
+}
 function renderAndPlay(abcString, paperId, audioContainerId, midiProgram, transposeSemitones, isBass = false) {
   const visualObj = ABCJS.renderAbc(paperId, abcString, {
     responsive: "resize",
@@ -1133,103 +1205,103 @@ function stylizeMelody(notes, style) {
     'g': 'f', '^g': 'g', 'a': 'g', '_b': 'a', 'b': 'a',
     "c'": 'b', "^c'": "c'", "d'": "c'", "^d'": "d'", "e'": "d'", "f'": "e'", "^f'": "f'",
     "g'": "f'", "^g'": "g'", "a'": "g'", "_b'": "a'", "b'": "a'"
-  };
+  }
+      let abcTokens = [];
+    notes.forEach((n, idx) => {
+        const base = n.abc;
+        const dur = n.len;
+        const up = stepUp[base] || base;
+        const down = stepDown[base] || base;
+        const isLast = idx === notes.length - 1;
 
+        if (n.isRest || style === 'original') {
+            abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
+            return;
+        }
 
-  let abcTokens = [];
-  notes.forEach((n, idx) => {
-    const base = n.abc;
-    const dur = n.len;
-    const up = stepUp[base] || base;
-    const down = stepDown[base] || base;
+        // Toate stilurile non-original folosesc variante SLOW & COLORATURĂ LIRICĂ
+        if (style === 'jazz' || style === 'blues') {
+            if (dur >= 4) {
+                abcTokens.push(`(${down}${base} (3${up}${base}${down} ${base}${dur - 2})`);
+            } else if (dur >= 2) {
+                abcTokens.push(`({${down}}${base}1 ${up}${dur - 1})`);
+            } else {
+                abcTokens.push(`{${down}}${base}`);
+            }
+        } else if (style === 'gospel' || style === 'balada') {
+            if (dur >= 4) {
+                abcTokens.push(`(!mordent!${base}2 (3${up}${base}${down} ${base}${dur - 3})`);
+            } else if (dur >= 2) {
+                abcTokens.push(`({${down}${up}}${base}${dur})`);
+            } else {
+                abcTokens.push(`{${down}}${base}`);
+            }
+        } else if (style === 'lautaresc' || style === 'folclor') {
+            if (dur >= 4) {
+                abcTokens.push(`(!trill!${base}1 (3${up}${base}${down} ${down}1 ${base}${dur - 3})`);
+            } else if (dur >= 2) {
+                abcTokens.push(`({${up}${base}${down}}${base}${dur})`);
+            } else {
+                abcTokens.push(`{${up}}${base}`);
+            }
+        } else if (style === 'sarbeasca') {
+            if (dur >= 2) {
+                abcTokens.push(`((3${base}${up}${base} ${down}${dur - 1})`);
+            } else {
+                abcTokens.push(`{${up}}${base}`);
+            }
+        } else {
+            // Clasic / Orice alt stil -> Coloratură lirică cantabile
+            if (dur >= 4) {
+                abcTokens.push(`(!turn!${base}2 ${up}1 ${down}1 ${base}${dur - 4 > 0 ? dur - 4 : ''})`);
+            } else if (dur >= 2) {
+                abcTokens.push(`({${up}}${base}1 ${down}${dur - 1})`);
+            } else {
+                abcTokens.push(`${base}`);
+            }
+        }
 
-    if (n.isRest || style === 'original') {
-      abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
-      return;
-    }
+        // Adăugăm fermata expresivă pe ultima notă în modul Slow
+        if (isLast && abcTokens.length > 0) {
+            abcTokens[abcTokens.length - 1] = `!fermata!${abcTokens[abcTokens.length - 1]}`;
+        }
+    });
 
-    if (style === 'jazz') {
-      if (dur >= 2 && idx % 2 === 0) {
-        abcTokens.push(`${down}1 ${base}${dur - 1 > 1 ? dur - 1 : ''}`);
-      } else {
-        abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
-      }
-    } else if (style === 'blues') {
-      if (dur >= 2) {
-        abcTokens.push(`(3${base}${base}${up}`);
-
-      } else {
-        abcTokens.push(`${base}`);
-      }
-    } else if (style === 'gospel') {
-      if (dur >= 2) {
-        abcTokens.push(`(3${down}${base}${up} ${base}${dur - 1 > 1 ? dur - 1 : ''}`);
-      } else {
-        abcTokens.push(`{${down}}${base}`);
-      }
-
-    } else if (style === 'lautaresc') {
-      if (dur >= 2) {
-        abcTokens.push(`(3${base}${up}${base} ${base}${dur - 1 > 1 ? dur - 1 : ''}`);
-      } else {
-        abcTokens.push(`{${up}}${base}`);
-      }
-    } else if (style === 'sarbeasca') {
-      if (dur >= 2) {
-        abcTokens.push(`${base}1 ${up}1`);
-      } else {
-        abcTokens.push(`${base}`);
-      }
-    } else if (style === 'balada') {
-      if (dur >= 4) {
-        abcTokens.push(`${base}2 ${up}1 ${base}1`);
-      } else {
-        abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
-      }
-    } else if (style === 'clasic') {
-      if (dur >= 2 && idx % 2 === 1) {
-        abcTokens.push(`${base}1 ${down}1`);
-      } else {
-        abcTokens.push(`${base}${dur > 1 ? dur : ''}`);
-      }
-    }
-  });
-
-  let result = "";
-  let beatCount = 0;
-  notes.forEach((n, i) => {
-    result += abcTokens[i] + " ";
-    beatCount += n.len;
-    if (beatCount >= 8) {
-      result += "| ";
-      beatCount = 0;
-    }
-  });
-  if (!result.trim().endsWith("|")) result += "|]";
-  return result;
+    let result = "";
+    let beatCount = 0;
+    notes.forEach((n, i) => {
+        result += abcTokens[i] + " ";
+        beatCount += n.len;
+        if (beatCount >= 8) {
+            result += "| ";
+            beatCount = 0;
+        }
+    });
+    if (!result.trim().endsWith("|")) result += "|]";
+    return result;
 }
-
-
 function updatePianoScore() {
-  const targetKey = document.getElementById('piano-target-key')?.value || 'C';
-  const instKey = document.getElementById('piano-instrument')?.value || 'piano';
-  const styleMode = document.getElementById('piano-style-mode')?.value || 'original';
-  const inst = instrumentConfig[instKey] || instrumentConfig.piano;
+    const targetKey = document.getElementById('piano-target-key')?.value || 'C';
+    const instKey = document.getElementById('piano-instrument')?.value || 'piano';
+    const styleMode = document.getElementById('piano-style-mode')?.value || 'original';
+    const inst = instrumentConfig[instKey] || instrumentConfig.piano;
 
-  const totalTranspose = (keyOffsets[targetKey] || 0) + inst.transpose;
-  const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : "";
-  const bodyAbc = stylizeMelody(recordedNotes, styleMode);
+    const totalTranspose = (keyOffsets[targetKey] || 0) + inst.transpose;
+    const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : "";
+    const isSlowStyle = styleMode !== 'original';
+    const tempoTag = isSlowStyle ? "\nQ: 1/4=62" : "\nQ: 1/4=96";
+    const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - SLOW COLORATURĂ` : "ORIGINAL";
+    const bodyAbc = stylizeMelody(recordedNotes, styleMode);
 
-  const abcString = `
+    const abcString = `
 X: 1
-T: Melodie - ${styleMode.toUpperCase()} (${inst.name} - ${targetKey})
+T: Melodie - ${styleLabel} (${inst.name} - ${targetKey})
 M: 4/4
-L: 1/8
+L: 1/8${tempoTag}
 K: C${clefTag}
 ${bodyAbc}
 `;
-
-  renderAndPlay(abcString, "piano-paper", "#piano-audio-controls", inst.midi, totalTranspose, inst.clef === "bass");
+    renderAndPlay(abcString, "piano-paper", "#piano-audio-controls", inst.midi, totalTranspose, inst.clef === "bass");
 }
 // ============================================================================
 // MODUL CAPTARE MICROFON OFFLINE (AUTOCORELAȚIE + DETECȚIE GAMĂ)
