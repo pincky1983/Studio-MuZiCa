@@ -345,20 +345,30 @@
     </div>
 
     <div class="controls-panel">
-      <div class="control-group">
+            <div class="control-group">
         <label>Durată notă:</label>
-        <select id="piano-note-len">
-          <option value="1">Optime (♪)</option>
-          <option value="2" selected>Pătrime (♩)</option>
-          <option value="4">Doime (𝅗𝅥)</option>
-        </select>
+        <input type="hidden" id="piano-note-len" value="2">
+        <div style="display: flex; gap: 6px; margin-top: 4px;">
+          <button type="button" class="back-btn note-len-btn" onclick="setPianoNoteLen(1, this)" style="flex: 1; background: #2c2c2c;">♪ Optime</button>
+          <button type="button" class="back-btn note-len-btn" onclick="setPianoNoteLen(2, this)" style="flex: 1; background: #2a9d8f; font-weight: bold;">♩ Pătrime</button>
+          <button type="button" class="back-btn note-len-btn" onclick="setPianoNoteLen(4, this)" style="flex: 1; background: #2c2c2c;">𝅗𝅥 Doime</button>
+        </div>
       </div>
 
-      <div style="display: flex; gap: 8px; margin-top: 5px;">
-        <button class="back-btn" style="flex:1; background:#2c2c2c;" onclick="addPianoRest()">➕ Pauză</button>
-        <button class="back-btn" style="flex:1; background:#8b2635;" onclick="undoPianoNote()">⌫ Șterge</button>
-        <button class="back-btn" style="flex:1; background:#444;" onclick="clearPianoNotes()">🗑 Reset</button>
+      <div class="control-group">
+        <label>Adaugă pauză:</label>
+        <div style="display: flex; gap: 6px; margin-top: 4px;">
+          <button type="button" class="back-btn" onclick="addPianoRest(1)" style="flex: 1; background: #2c2c2c;">𝄾 Pauză 1/8</button>
+          <button type="button" class="back-btn" onclick="addPianoRest(2)" style="flex: 1; background: #2c2c2c;">𝄽 Pauză 1/4</button>
+          <button type="button" class="back-btn" onclick="addPianoRest(4)" style="flex: 1; background: #2c2c2c;">𝄼 Pauză 1/2</button>
+        </div>
       </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <button type="button" class="back-btn" style="flex:1; background:#8b2635;" onclick="undoPianoNote()">⌫ Șterge</button>
+        <button type="button" class="back-btn" style="flex:1; background:#444;" onclick="clearPianoNotes()">🗑️ Reset</button>
+      </div>
+
             <div style="margin-top: 10px; text-align: center;">
         <button id="btn-mic-record" type="button" class="back-btn" style="width: 100%; background: #d62828; font-weight: bold;">
           🎤 Înregistrează (Microfon)

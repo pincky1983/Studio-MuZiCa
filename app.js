@@ -1006,12 +1006,28 @@ function handlePianoPress(keyObj) {
   recordedNotes.push({ abc: keyObj.abc, len: len, isRest: false });
   updatePianoScore();
 }
+function setPianoNoteLen(len, btnEl) {
+  const hiddenInput = document.getElementById('piano-note-len');
+  if (hiddenInput) hiddenInput.value = len;
 
-function addPianoRest() {
-  const len = parseInt(document.getElementById('piano-note-len').value || 2);
-  recordedNotes.push({ abc: 'z', len: len, isRest: true });
+  document.querySelectorAll('.note-len-btn').forEach(btn => {
+    btn.style.background = '#2c2c2c';
+    btn.style.fontWeight = 'normal';
+  });
+  if (btnEl) {
+    btnEl.style.background = '#2a9d8f';
+    btnEl.style.fontWeight = 'bold';
+  }
+}
+
+function addPianoRest(customLen) {
+  const selectedLen = parseInt(document.getElementById('piano-note-len')?.value || '2', 10);
+  const restLen = customLen || selectedLen;
+
+  recordedNotes.push({ abc: 'z', len: restLen, isRest: true });
   updatePianoScore();
 }
+
 
 function undoPianoNote() {
   recordedNotes.pop();
