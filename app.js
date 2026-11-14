@@ -1296,19 +1296,30 @@ function stylizeMelody(notes, style) {
             continue;
         }
 
-        if (style === 'gospel') {
-            // GOSPEL SOLEMN: Acorduri Maj7, dim7, m7 și 7 + simboluri deasupra portativului
-            const g = buildGospelChord(base, i);
+                if (style === 'gospel') {
+            // GOSPEL SOLEMN & LIN: Arpegii legato curgătoare (fără bătaie de marș) + simboluri de acord
+            const { semi, oct } = getSemitone(base);
+            const root = buildNote(semi - 12, oct);
+            const third = buildNote(semi - (i % 4 === 2 ? 9 : 8), oct);
+            const fifth = buildNote(semi - 5, oct);
+            const seventh = buildNote(semi - (i % 4 === 0 ? 1 : 2), oct);
+            const labels = ['"Cmaj7"', '"C#dim7"', '"Dm7"', '"G7"'];
+            const lbl = i % 2 === 0 ? labels[i % 4] : "";
+
             if (dur16 >= 8) {
-                const g2 = buildGospelChord(upWhole, i + 1);
-                out.push(`${g.label}${g.chord}4 ${g2.label}${g2.chord}2 ${base}2`);
+                // Doime -> Val arpegiat lin (1+1+1+5) legat cu legato
+                out.push(`${lbl}(${root}1 ${fifth}1 ${seventh}1 ${base}5)`);
             } else if (dur16 === 4) {
-                out.push(`${g.label}${g.chord}3 ${upWhole}1`);
+                // Pătrime -> Rulare moale (1+1+2) pe timp tare, melodie cantabilă pe timp slab
+                if (i % 2 === 0) {
+                    out.push(`${lbl}(${root}1 ${third}1 ${base}2)`);
+                } else {
+                    out.push(`(${base}3 ${upWhole}1)`);
+                }
             } else {
-                out.push(i % 2 === 0 ? `${g.label}${g.chord}2` : `${base}2`);
+                out.push(`(${base}2)`);
             }
         } else if (style === 'jazz') {
-            // JAZZ SWING: Balans 3+1 + rezolvare prin sensibilă (fără note false)
             if (dur16 >= 8) {
                 out.push(`(${base}3 ${upWhole}1 ${base}2 ${downHalf}1 ${nextNote}1)`);
             } else if (dur16 === 4) {
@@ -1317,7 +1328,6 @@ function stylizeMelody(notes, style) {
                 out.push(i % 2 === 1 ? `!>!${base}2` : `${base}2`);
             }
         } else if (style === 'blues') {
-            // BLUES SHUFFLE: Terță blues + accente tenuto
             if (dur16 >= 8) {
                 out.push(`(!tenuto!${base}4 ${thirdUp}2 ${upWhole}1 ${base}1)`);
             } else if (dur16 === 4) {
@@ -1326,7 +1336,6 @@ function stylizeMelody(notes, style) {
                 out.push(i % 2 === 0 ? `!tenuto!${base}2` : `${base}2`);
             }
         } else if (style === 'lautaresc') {
-            // LĂUTĂRESC / DOINĂ: Triluri + broderie pe secundă mare/sensibilă
             if (dur16 >= 8) {
                 out.push(`(!trill!${base}4 ${upWhole}1 ${base}1 ${downHalf}1 ${nextNote}1)`);
             } else if (dur16 === 4) {
@@ -1335,7 +1344,6 @@ function stylizeMelody(notes, style) {
                 out.push(`({${upWhole}}${base}2)`);
             }
         } else if (style === 'sarbeasca') {
-            // FOLCLOR / DOINĂ PASTORALĂ: Ritm punctat (1+3) în gamă
             if (dur16 >= 8) {
                 out.push(`(!lowermordent!${base}3 ${upWhole}1 ${downWhole}1 ${base}3)`);
             } else if (dur16 === 4) {
@@ -1344,7 +1352,6 @@ function stylizeMelody(notes, style) {
                 out.push(`{${upWhole}}${base}2`);
             }
         } else if (style === 'balada') {
-            // BALADĂ LIRICĂ: Legato cald și curgător
             if (dur16 >= 8) {
                 out.push(`(${base}5 ${upWhole}1 ${base}2)`);
             } else if (dur16 === 4) {
@@ -1353,7 +1360,6 @@ function stylizeMelody(notes, style) {
                 out.push(`(${base}2)`);
             }
         } else {
-            // CLASIC (Adagio Cantabile)
             if (dur16 >= 8) {
                 out.push(`(!turn!${base}4 ${upWhole}2 ${base}2)`);
             } else if (dur16 === 4) {
@@ -1368,20 +1374,83 @@ function stylizeMelody(notes, style) {
         }
     }
 
+    // Grupăm în măsuri de 16 șaisprezecimi și trecem pe RÂND NOU (\n) la fiecare 2 măsuri
+    // Astfel partitura se vede mare, aerisită și ușor de citit pe ecranul telefonului!
     let result = "";
     let count16 = 0;
+    let measureCount = 0;
     notes.forEach((n, idx) => {
         result += out[idx] + " ";
         count16 += n.len * 2;
         if (count16 >= 16) {
-            result += "| ";
+            measureCount++;
+            result += measureCount % 2 === 0 ? "|\n" : "| ";
             count16 = 0;
         }
     });
     if (!result.trim().endsWith("|")) result += "|]";
     return result;
 }
+function buildLeftHandBass(notes, style) {
+    if (!notes || notes.length === 0) return "z8 | z8 |]";
+    const isSlow = style !== 'original';
+    let bassTokens = [];
 
+    notes.forEach((n, idx) => {
+        const dur = isSlow ? n.len * 2 : n.len;
+        if (n.isRest) {
+            bassTokens.push(`z${dur > 1 ? dur : ''}`);
+            return;
+        }
+        const baseLetter = n.abc.replace(/[\^_,']/g, '').toUpperCase();
+        const fifthMap = { C: 'G,', D: 'A,', E: 'B,', F: 'C', G: 'D', A: 'E', B: 'F' };
+        const fifthNote = fifthMap[baseLetter] || 'G,';
+
+        if (!isSlow) {
+            bassTokens.push(`${baseLetter}${dur > 1 ? dur : ''}`);
+        } else if (style === 'gospel' || style === 'balada') {
+            if (dur >= 8) {
+                bassTokens.push(`(${baseLetter}4 ${fifthNote}4)`);
+            } else if (dur === 4) {
+                bassTokens.push(idx % 2 === 0 ? `${baseLetter}4` : `${fifthNote}4`);
+            } else {
+                bassTokens.push(`${baseLetter}2`);
+            }
+        } else if (style === 'jazz' || style === 'blues') {
+            if (dur >= 8) {
+                bassTokens.push(`${baseLetter}4 ${fifthNote}4`);
+            } else if (dur === 4) {
+                bassTokens.push(idx % 2 === 0 ? `${baseLetter}4` : `${fifthNote}4`);
+            } else {
+                bassTokens.push(`${baseLetter}2`);
+            }
+        } else {
+            if (dur >= 8) {
+                bassTokens.push(`[${baseLetter}${fifthNote}]8`);
+            } else if (dur === 4) {
+                bassTokens.push(`${baseLetter}4`);
+            } else {
+                bassTokens.push(`${baseLetter}2`);
+            }
+        }
+    });
+
+    const limit = isSlow ? 16 : 8;
+    let res = "";
+    let count = 0;
+    let mCount = 0;
+    notes.forEach((n, i) => {
+        res += bassTokens[i] + " ";
+        count += isSlow ? n.len * 2 : n.len;
+        if (count >= limit) {
+            mCount++;
+            res += mCount % 2 === 0 ? "|\n" : "| ";
+            count = 0;
+        }
+    });
+    if (!res.trim().endsWith("|")) res += "|]";
+    return res;
+}
 function updatePianoScore() {
     const targetKey = document.getElementById('piano-target-key')?.value || 'C';
     const instKey = document.getElementById('piano-instrument')?.value || 'piano';
@@ -1389,7 +1458,6 @@ function updatePianoScore() {
     const inst = instrumentConfig[instKey] || instrumentConfig.piano;
 
     const totalTranspose = (keyOffsets[targetKey] || 0) + inst.transpose;
-    const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : " clef=treble";
 
     const slowTempos = {
         original: 96,
@@ -1406,17 +1474,39 @@ function updatePianoScore() {
     const isSlowStyle = styleMode !== 'original';
     const unitLen = isSlowStyle ? "1/16" : "1/8";
     const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - ARANJAMENT (${bpm} BPM)` : "ORIGINAL";
-    const bodyAbc = stylizeMelody(recordedNotes, styleMode);
+    const rightHandAbc = stylizeMelody(recordedNotes, styleMode);
 
-    const abcString = `
-X: 1
-T: Melodie - ${styleLabel} (${inst.name} - ${targetKey})
-M: 4/4
-L: ${unitLen}
-Q: 1/4=${bpm}
-K: C${clefTag}
-${bodyAbc}
-`;
+    let abcString = "";
+    if (instKey === 'piano') {
+        const leftHandAbc = buildLeftHandBass(recordedNotes, styleMode);
+        abcString = [
+            "X: 1",
+            `T: Pian - ${styleLabel} (${targetKey})`,
+            "M: 4/4",
+            `L: ${unitLen}`,
+            `Q: 1/4=${bpm}`,
+                        "%%score {1 | 2}",
+            "V:1 clef=treble",
+            "V:2 clef=bass",
+            "K: C",
+            "V:1",
+            rightHandAbc,
+            "V:2",
+            leftHandAbc
+        ].join("\n");
+
+    } else {
+        const clefTag = inst.clef === "bass" ? "clef=bass octave=-1" : "clef=treble";
+        abcString = [
+            "X: 1",
+            `T: Melodie - ${styleLabel} (${inst.name} - ${targetKey})`,
+            "M: 4/4",
+            `L: ${unitLen}`,
+            `Q: 1/4=${bpm}`,
+            `K: C ${clefTag}`,
+            rightHandAbc
+        ].join("\n");
+    }
 
     renderAndPlay(abcString, "piano-paper", "#piano-audio-controls", inst.midi, totalTranspose, inst.clef === "bass");
 }
