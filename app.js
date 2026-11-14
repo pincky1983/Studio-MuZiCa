@@ -113,19 +113,29 @@ const patterns = {
       // Arpegii & Bebop
       { type: "arpeggios", abc: "D2 FA cB AG | G2 Bd fe dc | E2 GB dc BA | c2 eg c'4 |" },
       // Sincopat & Cromatisme
-      { type: "syncopated", abc: "D2 z F A2 c2 | z B G2 F2 D2 | _E2 z G _B2 d2 | C4 z4 |" }
+      { type: "syncopated", abc: "D2 z F A2 c2 | z B G2 F2 D2 | _E2 z G _B2 d2 | C4 z4 |" },
+            // Slow Jazz Ballad & Coloratură Lirică
+      { type: "slow_coloratura", abc: "{^F}G2 B2 d3 c | {^G}A2 F2 E2 z2 | {^c}d3 B G2 E2 | D2 {^F}A2 G4 |" },
+      { type: "slow_coloratura", abc: "z2 {B}c2 B2 G2 | {^D}E3 G B2 d2 | c2 {_B}A2 {^F}G2 E2 | C6 z2 |" },
+      { type: "slow_coloratura", abc: "e3 d {^c}d2 B2 | c2 A2 {^F}G4 | z2 E2 {^F}G2 B2 | d3 B G4 |" },
     ],
     "3/4": [
       { type: "normal", abc: "D2 F2 A2 | G2 B2 d2 | c2 e2 g2 | c6 |" },
-      { type: "triplets", abc: "(3DFA c2 A2 | (3GBd f2 d2 | (3ceg b2 g2 | c'6 |" }
+      { type: "triplets", abc: "(3DFA c2 A2 | (3GBd f2 d2 | (3ceg b2 g2 | c'6 |" },
+            { type: "slow_coloratura", abc: "{^F}G3 B d2 | {^G}A2 F2 E2 | D2 {^F}A2 G2 | B4 z2 |" },
+      { type: "slow_coloratura", abc: "z2 {B}c2 B2 | {^D}E3 G B2 | c2 {_B}A2 G2 | C4 z2 |" },
     ],
     "2/4": [
       { type: "normal", abc: "D2 F2 | G2 B2 | c2 e2 | c4 |" },
-      { type: "triplets", abc: "(3DFA (3cBA | (3GBd (3fed | (3ceg (3bag | c'4 |" }
+      { type: "triplets", abc: "(3DFA (3cBA | (3GBd (3fed | (3ceg (3bag | c'4 |" },
+            { type: "slow_coloratura", abc: "{^F}G2 B2 | d3 c | {^G}A2 F2 | G2 z2 |" },
+      { type: "slow_coloratura", abc: "z2 {B}c2 | {^D}E3 G | c2 {_B}A2 | C4 |" },
     ],
     "6/8": [
       { type: "normal", abc: "D2F A2c | B2G F2D | E2G B2d | c6 |" },
-      { type: "arpeggios", abc: "DFA cBA | GBd fed | EGB dcB | ceg c'3 |" }
+      { type: "arpeggios", abc: "DFA cBA | GBd fed | EGB dcB | ceg c'3 |" },
+            { type: "slow_coloratura", abc: "{^F}G3 B2 d | {^G}A3 F2 E | D3 {^F}A2 G | B4 z2 |" },
+      { type: "slow_coloratura", abc: "z3 {B}c2 B | {^D}E3 G2 B | c3 {_B}A2 G | C4 z2 |" },
     ]
   },
   blues: {
@@ -138,19 +148,30 @@ const patterns = {
       // Arpegii & Pasaje
       { type: "arpeggios", abc: "C_E G_B c_B G_E | F_A c_e f_e c_A | G_B df g_e c_B | c4 z4 |" },
       // Sincopat
-      { type: "syncopated", abc: "C2 z _E F2 ^F2 | z G _B2 c2 _E2 | G2 z F _E2 C2 | C4 z4 |" }
+      { type: "syncopated", abc: "C2 z _E F2 ^F2 | z G _B2 c2 _E2 | G2 z F _E2 C2 | C4 z4 |" },
+            { type: "slow_coloratura", abc: "{_E}E3 G {_B}c3 G | {^F}G2 _E2 C2 z2 | F2 {_A}A3 G F_E | C4 z4 |" },
+      { type: "slow_coloratura", abc: "z2 {_B}c2 _B2 G2 | {^F}G3 _E C4 | _E2 {E}F2 {^F}G2 _B2 | c4 z4 |" }
+
     ],
     "3/4": [
       { type: "normal", abc: "C2 _E2 F2 | ^F2 G2 _B2 | c2 _B2 G2 | C6 |" },
-      { type: "triplets", abc: "(3C_EG _B2 G2 | (3F_Ac _e2 c2 | (3G_Bd f2 d2 | c6 |" }
+      { type: "triplets", abc: "(3C_EG _B2 G2 | (3F_Ac _e2 c2 | (3G_Bd f2 d2 | c6 |" },
+            { type: "slow_coloratura", abc: "{_E}E3 G _B2 | {^F}G3 _E C2 | F2 {_A}A2 G_E | C4 z2 |" },
+      { type: "slow_coloratura", abc: "z2 {_B}c2 _B2 | {^F}G4 _E2 | _E2 {^F}G2 _B2 | c4 z2 |" },
     ],
     "2/4": [
       { type: "normal", abc: "C2 _E2 | F2 ^F2 | G2 _B2 | c4 |" },
-      { type: "triplets", abc: "(3C_EG (3_BG_E | (3F_Ac (3_ec_A | (3G_Bd (3f_d_B | c4 |" }
+      { type: "triplets", abc: "(3C_EG (3_BG_E | (3F_Ac (3_ec_A | (3G_Bd (3f_d_B | c4 |" },
+     { type: "slow_coloratura", abc: "{_E}E3 G _B2 | {^F}G3 _E C2 | F2 {_A}A2 G_E | C4 z2 |" },
+      { type: "slow_coloratura", abc: "z2 {_B}c2 _B2 | {^F}G4 _E2 | _E2 {^F}G2 _B2 | c4 z2 |" },
+            { type: "slow_coloratura", abc: "{_E}E3 G | {^F}G2 _E2 | {_B}c3 _B | G2 z2 |" },
+      { type: "slow_coloratura", abc: "z2 {_B}c2 | {^F}G3 _E | F2 {_A}A2 | C4 |" },
     ],
     "6/8": [
       { type: "normal", abc: "C2_E F2^F | G2_B c2_B | G2F _E2C | C6 |" },
-      { type: "arpeggios", abc: "C_EG _BG_E | F_Ac _ec_A | G_Bd fd_B | c6 |" }
+      { type: "arpeggios", abc: "C_EG _BG_E | F_Ac _ec_A | G_Bd fd_B | c6 |" },
+            { type: "slow_coloratura", abc: "{_E}E3 G2 _B | {^F}G3 _E2 C | F3 {_A}A2 G | C4 z2 |" },
+      { type: "slow_coloratura", abc: "z3 {_B}c2 _B | {^F}G3 _E3 | _E3 {^F}G2 _B | c4 z2 |" },
     ]
   },
   gospel: {
@@ -163,19 +184,27 @@ const patterns = {
       // Arpegii & Passing Chords
       { type: "arpeggios", abc: "CE Gc eg c'g | FA cf ac' fa | ^FA c^d ^fa c'a | GB dg bd' g'2 |" },
       // Sincopat
-      { type: "syncopated", abc: "C2 z E G2 c2 | z A F2 D2 B,2 | E2 z G c2 e2 | c4 z4 |" }
+      { type: "syncopated", abc: "C2 z E G2 c2 | z A F2 D2 B,2 | E2 z G c2 e2 | c4 z4 |" },
+          { type: "slow_coloratura", abc: "{D}E3 G A2 c2 | {B}c2 A2 G2 E2 | F2 {G}A3 G F_E | C4 z4 |" },
+    { type: "slow_coloratura", abc: "z2 G2 {B}c2 d2 | e3 d c2 A2 | G2 {^F}G2 E2 D2 | C6 z2 |" },
     ],
     "3/4": [
       { type: "normal", abc: "C2 E2 G2 | F2 A2 c2 | G2 B2 d2 | c6 |" },
-      { type: "triplets", abc: "(3CEG c2 G2 | (3FAc f2 c2 | (3GBd g2 d2 | c6 |" }
+      { type: "triplets", abc: "(3CEG c2 G2 | (3FAc f2 c2 | (3GBd g2 d2 | c6 |" },
+          { type: "slow_coloratura", abc: "{D}E3 G A2 | {B}c2 A2 G2 | F2 {G}A2 F_E | C4 z2 |" },
+    { type: "slow_coloratura", abc: "z2 G2 {B}c2 | e3 d c2 | G2 E2 D2 | C4 z2 |" },
     ],
     "2/4": [
       { type: "normal", abc: "C2 E2 | F2 A2 | G2 B2 | c4 |" },
-      { type: "triplets", abc: "(3CEG (3cGE | (3FAc (3fcA | (3GBd (3gdB | c4 |" }
+      { type: "triplets", abc: "(3CEG (3cGE | (3FAc (3fcA | (3GBd (3gdB | c4 |" },
+          { type: "slow_coloratura", abc: "{D}E2 G2 | {B}c3 A | F2 {G}A2 | G2 z2 |" },
+    { type: "slow_coloratura", abc: "z2 {B}c2 | e3 d | c2 A2 | C4 |" },
     ],
     "6/8": [
       { type: "normal", abc: "C2E G2c | A2F D2F | G2B d2B | c6 |" },
-      { type: "arpeggios", abc: "CEG cGE | FAc fcA | GBd gdB | ceg c'3 |" }
+      { type: "arpeggios", abc: "CEG cGE | FAc fcA | GBd gdB | ceg c'3 |" },
+          { type: "slow_coloratura", abc: "{D}E3 G2 A | {B}c3 A2 G | F3 {G}A2 F | C4 z2 |" },
+    { type: "slow_coloratura", abc: "z3 G2 {B}c | e3 d2 c | G3 E2 D | C4 z2 |" },
     ]
   },
     balada: {
@@ -184,19 +213,27 @@ const patterns = {
       { type: "normal", abc: "A2 c2 e2 a2 | F2 A2 c2 f2 | C2 E2 G2 c2 | G2 B2 d2 g2 |" },
       { type: "triplets", abc: "(3C2E2G2 (3c2G2E2 | (3A,2C2E2 (3A2E2C2 | (3F,2A,2C2 (3F2C2A,2 | (3G,2B,2D2 G4 |" },
       { type: "arpeggios", abc: "CE Gc eg c'g | A,C EA ce ac | FA cf ac' fa | GB dg bd' g'2 |" },
-      { type: "syncopated", abc: "C2 z E G2 c2 | z A, C2 E2 A2 | F2 z A c2 f2 | G4 z4 |" }
+      { type: "syncopated", abc: "C2 z E G2 c2 | z A, C2 E2 A2 | F2 z A c2 f2 | G4 z4 |" },
+          { type: "slow_coloratura", abc: "G2 {B}c3 B A2 | {^F}G2 E2 D2 z2 | E2 {G}A3 G F2 | E4 D4 |" },
+    { type: "slow_coloratura", abc: "z2 E2 G2 {B}c2 | d3 c B2 G2 | A2 {B}c2 B2 G2 | c6 z2 |" },
     ],
     "3/4": [
       { type: "normal", abc: "C2 E2 G2 | A,2 C2 E2 | F2 A2 c2 | G2 B2 d2 |" },
-      { type: "triplets", abc: "(3CEG c2 G2 | (3A,CE A2 E2 | (3FAc f2 c2 | G6 |" }
+      { type: "triplets", abc: "(3CEG c2 G2 | (3A,CE A2 E2 | (3FAc f2 c2 | G6 |" },
+          { type: "slow_coloratura", abc: "G2 {B}c2 B2 | A2 {^F}G2 E2 | F2 {G}A2 F2 | E4 z2 |" },
+    { type: "slow_coloratura", abc: "z2 E2 G2 | d3 c B2 | A2 B2 G2 | c4 z2 |" },
     ],
     "2/4": [
       { type: "normal", abc: "C2 G2 | A,2 E2 | F2 c2 | G2 d2 |" },
-      { type: "triplets", abc: "(3CEG (3cGE | (3A,CE (3AEC | (3FAc (3fcA | G4 |" }
+      { type: "triplets", abc: "(3CEG (3cGE | (3A,CE (3AEC | (3FAc (3fcA | G4 |" },
+          { type: "slow_coloratura", abc: "G2 {B}c2 | B3 A | {^F}G2 E2 | D2 z2 |" },
+    { type: "slow_coloratura", abc: "z2 {B}c2 | d3 c | B2 G2 | c4 |" },
     ],
     "6/8": [
       { type: "normal", abc: "C2E G2c | B2G E2B, | A,2C E2A | G6 |" },
-      { type: "arpeggios", abc: "CEG cGE | A,CE AEC | FAc fcA | GBd gdB |" }
+      { type: "arpeggios", abc: "CEG cGE | A,CE AEC | FAc fcA | GBd gdB |" },
+          { type: "slow_coloratura", abc: "G3 {B}c2 B | A3 {^F}G2 E | F3 {G}A2 F | E4 z2 |" },
+    { type: "slow_coloratura", abc: "z3 E2 G | d3 c2 B | A3 B2 G | c4 z2 |" },
     ]
   },
   clasic: {
@@ -205,19 +242,28 @@ const patterns = {
       { type: "normal", abc: "c2 G2 E2 G2 | A2 E2 C2 E2 | F2 D2 B,2 D2 | C4 z4 |" },
       { type: "triplets", abc: "(3C2E2G2 (3c2B2A2 | (3G2F2E2 (3D2C2B,2 | (3C2E2G2 (3B2d2f2 | e4 z4 |" },
       { type: "arpeggios", abc: "CG EG CG EG | DA FA DA FA | GB dB GB dB | ce ge c4 |" },
-      { type: "syncopated", abc: "c2 z G E2 G2 | z F D2 B,2 D2 | E2 z G c2 e2 | c4 z4 |" }
+      { type: "syncopated", abc: "c2 z G E2 G2 | z F D2 B,2 D2 | E2 z G c2 e2 | c4 z4 |" },
+          // Adagio & Nocturnă Clasică (Coloratură Lirică)
+    { type: "slow_coloratura", abc: "{D}E3 G {B}c2 e2 | {e}d3 c B2 G2 | {G}A2 c2 {B}A2 G2 | {^F}G4 z4 |" },
+    { type: "slow_coloratura", abc: "z2 G2 {d}e3 d | {d}c3 B A2 F2 | E2 {G}c2 {E}D2 B,2 | C6 z2 |" },
     ],
     "3/4": [
       { type: "normal", abc: "C2 E2 G2 | F2 D2 B,2 | G2 B2 d2 | c6 |" },
-      { type: "triplets", abc: "(3CEG (3cBA (3GFE | (3DFA (3dcB (3AGF | (3EGB (3edc (3BAG | c6 |" }
+      { type: "triplets", abc: "(3CEG (3cBA (3GFE | (3DFA (3dcB (3AGF | (3EGB (3edc (3BAG | c6 |" },
+          { type: "slow_coloratura", abc: "{D}E3 G {B}c2 | {e}d3 c B2 | {G}A2 c2 B2 | {^F}G4 z2 |" },
+    { type: "slow_coloratura", abc: "z2 G2 {d}e2 | {d}c3 B A2 | E2 {E}D2 B,2 | C4 z2 |" },
     ],
     "2/4": [
       { type: "normal", abc: "C2 E2 | D2 F2 | G2 B2 | c4 |" },
-      { type: "arpeggios", abc: "CGEG | DAFA | GBdB | c4 |" }
+      { type: "arpeggios", abc: "CGEG | DAFA | GBdB | c4 |" },
+          { type: "slow_coloratura", abc: "{D}E2 G2 | {B}c3 e | {e}d2 c2 | {^F}G2 z2 |" },
+    { type: "slow_coloratura", abc: "z2 {d}e2 | {d}c3 B | E2 {E}D2 | C4 |" },
     ],
     "6/8": [
       { type: "normal", abc: "C2E G2E | D2F A2F | G2B d2B | c6 |" },
-      { type: "arpeggios", abc: "CEG cGE | DFA dAF | GBd gdB | c6 |" }
+      { type: "arpeggios", abc: "CEG cGE | DFA dAF | GBd gdB | c6 |" },
+          { type: "slow_coloratura", abc: "{D}E3 G2 {B}c | {e}d3 c2 B | {G}A3 c2 B | {^F}G4 z2 |" },
+    { type: "slow_coloratura", abc: "z3 G2 {d}e | {d}c3 B2 A | E3 {E}D2 B, | C4 z2 |" },
     ]
   },
   lautaresc: {
@@ -227,19 +273,28 @@ const patterns = {
       { type: "triplets", abc: "(3E2F2^G2 (3A2B2c2 | (3d2c2B2 (3A2^G2F2 | (3E2^G2B2 (3d2c2B2 | E4 z4 |" },
       { type: "triplets", abc: "(3e2d2c2 (3B2A2^G2 | (3A2B2c2 (3B2A2^G2 | (3F2^G2A2 (3^G2F2E2 | E4 z4 |" },
       { type: "arpeggios", abc: "EF ^GA Bc de | ed cB A^G FE | ^GA Bc dB ^GF | E4 z4 |" },
-      { type: "syncopated", abc: "E2 z ^G A2 c2 | z B A2 ^G2 F2 | E2 z F ^G2 B2 | E4 z4 |" }
+      { type: "syncopated", abc: "E2 z ^G A2 c2 | z B A2 ^G2 F2 | E2 z F ^G2 B2 | E4 z4 |" },
+          // Taksîm & Coloratură Lăutărească Lentă
+    { type: "slow_coloratura", abc: "{_D}E3 F {^F}G2 {_A}B2 | {_B}c2 {_A}B2 {G}_A2 F2 | {_D}E2 F2 {G}_A2 G2 | {_D}E4 z4 |" },
+    { type: "slow_coloratura", abc: "z2 {^F}G2 {_A}B2 {_B}c2 | {^c}d3 {_B}c {_A}B2 {^F}G2 | F2 {_A}B2 G2 {_D}E2 | C6 z2 |" },
     ],
     "3/4": [
       { type: "normal", abc: "E2 ^G2 B2 | c2 B2 A2 | ^G2 F2 E2 | E6 |" },
-      { type: "triplets", abc: "(3EF^G (3ABc B2 | (3dcB (3A^GF E2 | (3E^GB d2 c2 | E6 |" }
+      { type: "triplets", abc: "(3EF^G (3ABc B2 | (3dcB (3A^GF E2 | (3E^GB d2 c2 | E6 |" },
+          { type: "slow_coloratura", abc: "{_D}E3 F {^F}G2 | {_A}B2 {G}_A2 F2 | {_D}E2 {_A}B2 G2 | {_D}E4 z2 |" },
+    { type: "slow_coloratura", abc: "z2 {^F}G2 {_A}B2 | {^c}d3 {_B}c2 | {_A}B2 G2 {_D}E2 | C4 z2 |" },
     ],
     "2/4": [
       { type: "normal", abc: "E2 ^G2 | A2 c2 | B2 ^G2 | E4 |" },
-      { type: "triplets", abc: "(3EF^G (3ABc | (3dcB (3A^GF | (3E^GB (3dcB | E4 |" }
+      { type: "triplets", abc: "(3EF^G (3ABc | (3dcB (3A^GF | (3E^GB (3dcB | E4 |" },
+          { type: "slow_coloratura", abc: "{_D}E2 F2 | {^F}G3 {_A}B | {_B}c2 {_A}B2 | G2 z2 |" },
+    { type: "slow_coloratura", abc: "z2 {_A}B2 | {^c}d3 {_B}c | {_A}B2 G2 | {_D}E4 |" },
     ],
     "6/8": [
       { type: "normal", abc: "E2^G B2c | d2c B2A | ^G2F E2D | E6 |" },
-      { type: "arpeggios", abc: "EF^G ABc | dcB A^GF | E^GB dcB | E6 |" }
+      { type: "arpeggios", abc: "EF^G ABc | dcB A^GF | E^GB dcB | E6 |" },
+          { type: "slow_coloratura", abc: "{_D}E3 F2 {^F}G | {_A}B3 {G}_A2 F | {_D}E3 {_A}B2 G | {_D}E4 z2 |" },
+    { type: "slow_coloratura", abc: "z3 {^F}G2 {_A}B | {^c}d3 {_B}c2 | {_A}B3 G2 {_D}E | C4 z2 |" },
     ]
   },
   folclor: {
@@ -249,19 +304,28 @@ const patterns = {
       { type: "triplets", abc: "(3C2D2E2 (3G2A2G2 | (3E2D2C2 (3D2E2G2 | (3A2B2c2 (3B2A2G2 | C4 z4 |" },
       { type: "triplets", abc: "(3G2A2B2 (3c2d2e2 | (3d2c2B2 (3A2G2E2 | (3D2E2G2 (3A2G2E2 | C4 z4 |" },
       { type: "arpeggios", abc: "CD EG AG ED | CE GA cA GE | GA Bc dB AG | c4 z4 |" },
-      { type: "syncopated", abc: "C2 z E G2 A2 | z G E2 D2 C2 | G2 z A B2 d2 | c4 z4 |" }
+      { type: "syncopated", abc: "C2 z E G2 A2 | z G E2 D2 C2 | G2 z A B2 d2 | c4 z4 |" },
+          // Doină & Coloratură Folclorică Lentă
+    { type: "slow_coloratura", abc: "{D}E3 G A2 {B}c2 | {A}B2 G2 E2 z2 | {^F}G3 A B2 G2 | E4 D4 |" },
+    { type: "slow_coloratura", abc: "z2 E2 {G}A2 {B}c2 | {^c}d3 c B2 A2 | G2 {A}B2 G2 E2 | C6 z2 |" },
     ],
     "3/4": [
       { type: "normal", abc: "C2 E2 G2 | A2 G2 E2 | D2 E2 G2 | C6 |" },
-      { type: "triplets", abc: "(3CDE G2 E2 | (3FGA c2 A2 | (3GAB d2 B2 | c6 |" }
+      { type: "triplets", abc: "(3CDE G2 E2 | (3FGA c2 A2 | (3GAB d2 B2 | c6 |" },
+          { type: "slow_coloratura", abc: "{D}E3 G A2 | {A}B2 G2 E2 | {^F}G2 A2 B2 | E4 z2 |" },
+    { type: "slow_coloratura", abc: "z2 E2 {G}A2 | {^c}d3 c B2 | G2 {A}B2 E2 | C4 z2 |" },
     ],
     "2/4": [
       { type: "normal", abc: "C2 E2 | G2 A2 | G2 E2 | C4 |" },
-      { type: "triplets", abc: "(3CDE (3GAG | (3EDC (3DEG | (3ABc (3BAG | C4 |" }
+      { type: "triplets", abc: "(3CDE (3GAG | (3EDC (3DEG | (3ABc (3BAG | C4 |" },
+          { type: "slow_coloratura", abc: "{D}E2 G2 | {A}B3 G | {^F}G2 A2 | E2 z2 |" },
+    { type: "slow_coloratura", abc: "z2 {G}A2 | {^c}d3 c | G2 E2 | C4 |" },
     ],
     "6/8": [
       { type: "normal", abc: "C2E G2A | G2E D2C | E2G A2B | c6 |" },
-      { type: "arpeggios", abc: "CDE GAG | EDC DEG | ABc BAG | c6 |" }
+      { type: "arpeggios", abc: "CDE GAG | EDC DEG | ABc BAG | c6 |" },
+          { type: "slow_coloratura", abc: "{D}E3 G2 A | {A}B3 G2 E | {^F}G3 A2 B | E4 z2 |" },
+    { type: "slow_coloratura", abc: "z3 E2 {G}A | {^c}d3 c2 B | G3 {A}B2 E | C4 z2 |" },
     ]
   },
   sarbeasca: {
@@ -271,20 +335,28 @@ const patterns = {
       { type: "triplets", abc: "(3E2^G2A2 (3B2c2B2 | (3A2^G2F2 (3E2F2^G2 | (3A2B2c2 (3d2c2B2 | (3A2^G2F2 E4 |" },
       { type: "triplets", abc: "(3e2d2c2 (3B2A2^G2 | (3c2B2A2 (3^G2F2E2 | (3F2^G2A2 (3B2A2^G2 | (3F2E2D2 E4 |" },
       { type: "arpeggios", abc: "E^G AB cB A^G | F^G AB cB AF | E^G Bc dc B^G | FE ^GF E4 |" },
-      { type: "syncopated", abc: "E2 z ^G A2 B2 | z c B2 A2 ^G2 | F2 z ^G A2 ^G2 | F2 E2 E4 |" }
+      { type: "syncopated", abc: "E2 z ^G A2 B2 | z c B2 A2 ^G2 | F2 z ^G A2 ^G2 | F2 E2 E4 |" },
+          { type: "slow_coloratura", abc: "{_D}E3 F G2 {_A}B2 | {_B}c2 {_A}B2 G2 F2 | {_D}E2 F2 {G}_A2 G2 | {_D}E4 z4 |" },
+    { type: "slow_coloratura", abc: "z2 G2 {_A}B2 {_B}c2 | {^c}d3 {_B}c {_A}B2 G2 | F2 {_A}B2 G2 {_D}E2 | C6 z2 |" },
     ],
     "3/4": [
       { type: "normal", abc: "E2 ^G2 B2 | c2 B2 A2 | ^G2 F2 E2 | E6 |" },
-      { type: "triplets", abc: "(3E^GB (3dcB A2 | (3^GFE (3F^GA B2 | (3cBA (3^GFE E2 | E6 |" }
+      { type: "triplets", abc: "(3E^GB (3dcB A2 | (3^GFE (3F^GA B2 | (3cBA (3^GFE E2 | E6 |" },
+          { type: "slow_coloratura", abc: "{_D}E3 F G2 | {_A}B2 G2 F2 | {_D}E2 {_A}B2 G2 | {_D}E4 z2 |" },
+    { type: "slow_coloratura", abc: "z2 G2 {_A}B2 | {^c}d3 {_B}c2 | {_A}B2 G2 {_D}E2 | C4 z2 |" },
     ],
     "2/4": [
       { type: "normal", abc: "E^G AB | cB A^G | F^G A^G | FE E2 |" },
       { type: "triplets", abc: "(3E^GA (3BcB | (3A^GF (3EF^G | (3ABc (3BA^G | FE E2 |" },
-      { type: "arpeggios", abc: "E^GBd | cBA^G | F^GA^G | FEE2 |" }
+      { type: "arpeggios", abc: "E^GBd | cBA^G | F^GA^G | FEE2 |" },
+          { type: "slow_coloratura", abc: "{_D}E2 F2 | G3 {_A}B | {_B}c2 {_A}B2 | G2 z2 |" },
+    { type: "slow_coloratura", abc: "z2 {_A}B2 | {^c}d3 {_B}c | {_A}B2 G2 | {_D}E4 |" },
     ],
     "6/8": [
       { type: "normal", abc: "E2^G A2B | c2B A2^G | F2^G A2^G | F2E E3 |" },
-      { type: "arpeggios", abc: "E^GA BcB | A^GF EF^G | ABc BA^G | F2E E3 |" }
+      { type: "arpeggios", abc: "E^GA BcB | A^GF EF^G | ABc BA^G | F2E E3 |" },
+          { type: "slow_coloratura", abc: "{_D}E3 F2 G | {_A}B3 G2 F | {_D}E3 {_A}B2 G | {_D}E4 z2 |" },
+    { type: "slow_coloratura", abc: "z3 G2 {_A}B | {^c}d3 {_B}c2 | {_A}B3 G2 {_D}E | C4 z2 |" },
     ]
   }
 };
@@ -440,19 +512,21 @@ function generateMusic() {
       }
     }
     selectedMusic = formatted;
+      selectedMusic = applyColoraturaEnhancements(selectedMusic);
 
   }
 const octaveShift = parseInt(document.getElementById('octave-shift')?.value || 0);
 const totalTranspose = keyOffsets[keySig] + inst.transpose + octaveShift;
 
 const clefTag = inst.clef === "bass" ? " clef=bass octave=-1" : "";
-
+  const customBpm = document.getElementById('gen-bpm')?.value || 90;
+  const tempoTag = `\nQ: 1/4=${customBpm}`;
 
 const abcString = `
 X: 1
 T: ${titleLabel}
 M: ${timeSig}
-L: 1/8
+L: 1/8${tempoTag}
 K: C${clefTag}
 ${selectedMusic}
 `;

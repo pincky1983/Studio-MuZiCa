@@ -159,13 +159,32 @@
 
           <div class="control-group" id="standard-controls">
         <label for="rhythm-style">Stil Ritmic & Variații:</label>
-        <select id="rhythm-style">
+        <select id="rhythm-style" onchange="onRhythmStyleChange(this.value)">
           <option value="all">🎲 Toate (Aleatoriu: Progresii + Triolete)</option>
           <option value="normal">🎵 Progresii Clasice (Pătrimi / Optimi)</option>
           <option value="triplets">🎶 Triolete & Swing (3/2)</option>
           <option value="arpeggios">🎹 Arpegii & Pasaje Rapide</option>
           <option value="syncopated">⚡ Sincopat & Cromatisme</option>
+           <option value="slow_coloratura">🎷 Lent & Coloratură Lirică (Note lungi & Apogiaturi)</option>
+
         </select>
+      </div>
+      <!-- PANOU EXPRESIVITATE, TEMPO & COLORATURĂ AI -->
+      <div class="control-group" style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 8px;">
+        <label for="gen-bpm">Tempo (BPM): <strong id="gen-bpm-val" style="color: #ffd166;">90</strong> BPM</label>
+        <input type="range" id="gen-bpm" min="45" max="150" value="90" style="width: 100%; margin: 6px 0;" oninput="document.getElementById('gen-bpm-val').textContent = this.value">
+
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 13px;">
+          <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+            <input type="checkbox" id="opt-ornaments" checked> ✨ Triluri & Apogiaturi AI
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+            <input type="checkbox" id="opt-dynamics" checked> 🎭 Dinamică & Fermata
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+            <input type="checkbox" id="opt-harmony"> 🎻 Dublaj la Terță (2 Voci)
+          </label>
+        </div>
       </div>
 
       <div id="improv-controls" style="display: none;">
