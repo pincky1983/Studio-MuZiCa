@@ -15,7 +15,7 @@ jobs:
       - name: Configurează Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Configurează Java 17
         uses: actions/setup-java@v4
@@ -25,39 +25,36 @@ jobs:
 
       - name: Pregătește proiectul Capacitor și Pictograma
         run: |
-          # Șterge complet folderele vechi ca să nu rămână nimic blocat în cache-ul serverului
           rm -rf android www assets
-          
-          # Reconstruiește folderul public web curat cu fișierele tale actuale
           mkdir -p www/libs
           cp -r * www/ 2>/dev/null || true
           rm -rf www/www www/.github
-          
-          # Descarcă librăriile necesare pentru funcționare 100% OFFLINE
-          curl -L "https://jsdelivr.net" -o www/libs/abcjs-basic-min.js
-          curl -L "https://jsdelivr.net" -o www/libs/abcjs-audio.css
-          curl -L "https://jsdelivr.net" -o www/libs/jspdf.umd.min.js
-          
-          # Inițializează dependințele npm necesare
+
+          # Instalează Capacitor + abcjs + jspdf direct prin npm (rapid și fără timeout)
           npm init -y
-          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/assets
-          
+          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/assets abcjs@6.4.4 jspdf@2.5.2
+
+          # Copiază fișierele offline în www/libs/
+          cp node_modules/abcjs/dist/abcjs-basic-min.js www/libs/abcjs-basic-min.js
+          cp node_modules/abcjs/abcjs-audio.css www/libs/abcjs-audio.css
+          cp node_modules/jspdf/dist/jspdf.umd.min.js www/libs/jspdf.umd.min.js
+
           # Generează structura nativă Android curată de la zero
           npx cap init "Studio Muzical AI" "com.pincky.studiomuzica" --web-dir=www
           npx cap add android
-          
+
           # Adaugă permisiunea de Microfon în AndroidManifest.xml
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />|' $MANIFEST
-          
-          # Generare simplificată și compatibilă pentru pictograma ta personalizată
+
+          # Generare pictograma personalizată
           if [ -f "icon.png" ]; then
             mkdir -p assets
             cp icon.png assets/icon-only.png
             cp icon.png assets/icon-foreground.png
             npx capacitor-assets generate --android --iconBackgroundColor '#121212' --splashBackgroundColor '#121212'
           fi
-          
+
           # Sincronizează activele în folderul nativ Android
           npx cap sync
           mkdir -p android/app/src/main/res/values
