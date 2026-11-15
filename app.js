@@ -543,39 +543,7 @@ function applyColoraturaEnhancements(abcBody) {
 
     let enhanced = abcBody;
 
-    // 1. Triluri & Apogiaturi AI
-    if (useOrnaments) {
-        const ornaments = ['!trill!', '!mordent!', '!turn!'];
-        let count = 0;
-        enhanced = enhanced.replace(/([A-Ga-g][',]?)([234])/g, (match, note, dur) => {
-            count++;
-            if (count % 3 === 1) {
-                const orn = ornaments[count % ornaments.length];
-                return `${orn}${note}${dur}`;
-            }
-            return match;
-        });
-    }
-
-    // 2. Dinamică & Fermata
-    if (useDynamics) {
-        const measures = enhanced.split('|');
-        for (let i = 0; i < measures.length; i++) {
-            let m = measures[i].trim();
-            if (!m) continue;
-            if (i === 0) {
-                m = `!mf! ${m}`;
-            } else if (i === Math.floor(measures.length / 2)) {
-                m = `!f! ${m}`;
-            } else if (i === measures.length - 2 || i === measures.length - 1) {
-                m = m.replace(/([A-Ga-g][',]?\d*)$/, '!fermata!!p!$1');
-            }
-            measures[i] = ` ${m} `;
-        }
-        enhanced = measures.join('|').trim();
-    }
-
-    // 3. Dublaj la Terță (2 Voci)
+    // 1. Dublaj la Terță PRIMUL (înainte de a adăuga ornamente cu litere)
     if (useHarmony) {
         const scale = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
         enhanced = enhanced.replace(/(\^|_|=)?([A-Ga-g])([',]?)(\d*)/g, (match, acc, noteChar, oct, dur) => {
@@ -600,6 +568,38 @@ function applyColoraturaEnhancements(abcBody) {
             const prefix = acc || '';
             return `[${prefix}${noteChar}${oct}${thirdChar}${thirdOct}]${dur}`;
         });
+    }
+
+    // 2. Triluri & Apogiaturi AI (recunoaște atât note simple, cât și acorduri [...])
+    if (useOrnaments) {
+        const ornaments = ['!trill!', '!mordent!', '!turn!'];
+        let count = 0;
+        enhanced = enhanced.replace(/(\[[^\]]+\]|[A-Ga-g][',]?)([234])/g, (match, target, dur) => {
+            count++;
+            if (count % 3 === 1) {
+                const orn = ornaments[count % ornaments.length];
+                return `${orn}${target}${dur}`;
+            }
+            return match;
+        });
+    }
+
+    // 3. Dinamică & Fermata la final
+    if (useDynamics) {
+        const measures = enhanced.split('|');
+        for (let i = 0; i < measures.length; i++) {
+            let m = measures[i].trim();
+            if (!m || m === ']') continue;
+            if (i === 0) {
+                m = `!mf! ${m}`;
+            } else if (i === Math.floor(measures.length / 2)) {
+                m = `!f! ${m}`;
+            } else if (i === measures.length - 2 || i === measures.length - 1) {
+                m = m.replace(/(\[[^\]]+\]\d*|[A-Ga-g][',]?\d*)$/, '!fermata!!p!$1');
+            }
+            measures[i] = ` ${m} `;
+        }
+        enhanced = measures.join('|').trim();
     }
 
     return enhanced;
@@ -846,13 +846,15 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 // === EXPORT PDF A4 (FUNDAL ALB, NOTE NEGRE) ===
-async function exportScoreToPDF() {
-  const svgEl = document.querySelector('#scan-paper svg');
+async function exportScoreToPDF(customSelector) {
+  const svgEl = customSelector
+    ? document.querySelector(customSelector)
+    : (document.querySelector('.screen.active svg') || document.querySelector('#scan-paper svg, #paper svg, #piano-paper svg'));
+
   if (!svgEl) {
     alert('Nu există nicio partitură generată de exportat!');
     return;
   }
-
   try {
     const clone = svgEl.cloneNode(true);
     clone.querySelectorAll('path, text, rect, line, circle, ellipse, polygon').forEach(el => {
@@ -1435,6 +1437,18 @@ function buildLeftHandBass(notes, style) {
                 bassTokens.push(idx % 2 === 0 ? `(${bassOct2}2 ${bassFifth}2)` : `(${seventhLow}2 ${bassFifth}2)`);
             } else {
                 bassTokens.push(`${bassOct3}2`);
+            }
+        } else {
+            // Fallback pentru clasic, lautaresc, sarbeasca
+            if (dur >= 8) {
+                bassTokens.push(`(${bassOct2}4 ${bassFifth}4)`);
+            } else if (dur === 4) {
+                bassTokens.push(idx % 2 === 0 ? `${bassOct2}4` : `${bassFifth}4`);
+            } else {
+                bassTokens.push(`${bassOct3}2`);
+            }
+        }
+    });
     const limit = isSlow ? 16 : 8;
     let res = "";
     let count = 0;
@@ -1476,7 +1490,6 @@ function updatePianoScore() {
     const unitLen = isSlowStyle ? "1/16" : "1/8";
     const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - CORAL SOLEMN (${bpm} BPM)` : "ORIGINAL";
     const rightHandAbc = stylizeMelody(recordedNotes, styleMode);
-
     let abcString = "";
     if (instKey === 'piano' && isSlowStyle) {
         const leftHandAbc = buildLeftHandBass(recordedNotes, styleMode);
@@ -1588,13 +1601,14 @@ function autoCorrelate(buf, sampleRate) {
     }
   }
   let T0 = maxpos;
-
-  // Interpolare parabolică pentru precizie fină
-  const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
-  const a = (x1 + x3 - 2 * x2) / 2;
-  const b = (x3 - x1) / 2;
-  if (a) T0 = T0 - b / (2 * a);
-
+  
+   // Interpolare parabolică pentru precizie fină (cu protecție la capete)
+  if (T0 > 0 && T0 < SIZE - 1) {
+    const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+    const a = (x1 + x3 - 2 * x2) / 2;
+    const b = (x3 - x1) / 2;
+    if (a) T0 = T0 - b / (2 * a);
+  }
   return sampleRate / T0;
 }
 
@@ -1764,17 +1778,23 @@ async function toggleMicRecording() {
       updatePianoScore();
       return;
     }
-
     // 1. Detectăm gama automat
     const detectedKey = detectMusicalKey(capturedMidiSequence);
+    const keyOffset = keyOffsets[detectedKey] || 0;
+
+    // Normalizăm notele captate în Do (C) pentru ca transpunerea și aranjorul să lucreze corect
+    if (keyOffset !== 0) {
+      recordedNotes = capturedMidiSequence.map((midi, i) => ({
+        abc: midiToAbcNote(midi - keyOffset),
+        len: recordedNotes[i].len,
+        isRest: false
+      }));
+    }
+
     // 2. Selectăm gama detectată în #piano-target-key
     const targetKeySelect = document.getElementById("piano-target-key");
     if (targetKeySelect) {
       targetKeySelect.value = detectedKey;
-    }
-
-    if (statusEl) {
-      statusEl.innerHTML = `✅ Captate <b>${recordedNotes.length} note</b> | Gamă detectată: <b>${detectedKey}</b>`;
     }
 
     // 3. Apelăm updatePianoScore() - activează automat transpunerea, instrumentul și stilurile!
@@ -1788,3 +1808,13 @@ document.addEventListener("DOMContentLoaded", () => {
     micBtn.addEventListener("click", toggleMicRecording);
   }
 });
+function onRhythmStyleChange(style) {
+  const bpmSlider = document.getElementById('gen-bpm');
+  const bpmVal = document.getElementById('gen-bpm-val');
+  if (bpmSlider && bpmVal) {
+    const targetBpm = style === 'slow_coloratura' ? 66 : 90;
+    bpmSlider.value = targetBpm;
+    bpmVal.textContent = targetBpm;
+  }
+  generateMusic();
+}
