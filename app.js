@@ -1169,12 +1169,9 @@ function setPianoNoteLen(len, btnEl) {
 function addPianoRest(customLen) {
   const selectedLen = parseInt(document.getElementById('piano-note-len')?.value || '2', 10);
   const restLen = customLen || selectedLen;
-
   recordedNotes.push({ abc: 'z', len: restLen, isRest: true });
   updatePianoScore();
 }
-
-
 function undoPianoNote() {
   recordedNotes.pop();
   updatePianoScore();
@@ -1186,9 +1183,8 @@ function clearPianoNotes() {
 function stylizeMelody(notes, style) {
     if (!notes || notes.length === 0) return "z8 | z8 |]";
 
-    // Hartă cromatică completă pentru a nu genera niciodată note false în afara gamei
     const chromatic = ['C', '^C', 'D', '^D', 'E', 'F', '^F', 'G', '^G', 'A', '^A', 'B'];
-
+        const majorScaleSemis = new Array(0, 2, 4, 5, 7, 9, 11);
     function parseNote(abc) {
         const m = abc.match(/^(\^|_)?([A-Ga-g])([',]*)$/);
         if (!m) return { acc: '', letter: 'C', oct: 0 };
@@ -1225,43 +1221,17 @@ function stylizeMelody(notes, style) {
         return { semi: (idx + 12) % 12, oct: p.oct };
     }
 
-    // Construiește acorduri Gospel bogate (Maj7, m7, 7, dim7) sub melodia principală
-    function buildGospelChord(melodyAbc, stepIndex) {
-        const { semi, oct } = getSemitone(melodyAbc);
-        const top = buildNote(semi, oct);
-        const mod = stepIndex % 4;
-
-        if (mod === 0) {
-            // Acord Major cu Septimă Mare (Maj7) - cald și solemn
-            return {
-                label: `"Cmaj7"`,
-                chord: `[${buildNote(semi - 12, oct)}${buildNote(semi - 8, oct)}${buildNote(semi - 5, oct)}${top}]`
-            };
-        } else if (mod === 1) {
-            // Acord Diminuat de pasaj (dim7) - tensiune expresivă Gospel
-            return {
-                label: `"C#dim7"`,
-                chord: `[${buildNote(semi - 9, oct)}${buildNote(semi - 6, oct)}${buildNote(semi - 3, oct)}${top}]`
-            };
-        } else if (mod === 2) {
-            // Acord Minor cu Septimă (m7) - profund și melodios
-            return {
-                label: `"Dm7"`,
-                chord: `[${buildNote(semi - 12, oct)}${buildNote(semi - 9, oct)}${buildNote(semi - 5, oct)}${top}]`
-            };
-        } else {
-            // Acord de Dominantă cu Septimă (G7) - rezolvare clasică Gospel
-            return {
-                label: `"G7"`,
-                chord: `[${buildNote(semi - 10, oct)}${buildNote(semi - 6, oct)}${buildNote(semi - 3, oct)}${top}]`
-            };
-        }
-    }
-
-    // Pas diatonic/cromatic sigur (în gamă, fără note false)
-    function stepSafe(abc, deltaSemitones) {
+    function diatonicStep(abc, degreeDelta) {
         const { semi, oct } = getSemitone(abc);
-        return buildNote(semi + deltaSemitones, oct);
+        let degIdx = majorScaleSemis.indexOf(semi);
+        if (degIdx === -1) {
+            return buildNote(semi + (degreeDelta < 0 ? -4 : 3), oct);
+        }
+        let targetDeg = degIdx + degreeDelta;
+        let octShift = 0;
+        while (targetDeg < 0) { targetDeg += 7; octShift--; }
+        while (targetDeg >= 7) { targetDeg -= 7; octShift++; }
+        return buildNote(majorScaleSemis[targetDeg], oct + octShift);
     }
 
     if (style === 'original') {
@@ -1284,98 +1254,93 @@ function stylizeMelody(notes, style) {
         const dur16 = cur.len * 2;
         const nextNote = next ? next.abc : base;
         const isLast = i === notes.length - 1;
+        const isStrongBeat = (i % 2 === 0);
 
-        // Calculăm trepte armonice sigure față de nota curentă
-        const upWhole = stepSafe(base, 2);     // secundă mare sus (în gamă)
-        const downWhole = stepSafe(base, -2);  // secundă mare jos (în gamă)
-        const downHalf = stepSafe(base, -1);   // sensibila de jos (semiton)
-        const thirdUp = stepSafe(base, 3);     // terță minoră sus
+        const upDiatonic = diatonicStep(base, 1);
+        const downDiatonic = diatonicStep(base, -1);
+        const altoThird = diatonicStep(base, -2);
+        const tenorSixth = diatonicStep(base, -5);
+
+        let dyn = "";
+        if (i === 0) dyn = "!mp!";
+        else if (i === Math.floor(notes.length / 2)) dyn = "!mf!";
 
         if (cur.isRest) {
             out.push(`z${dur16 > 1 ? dur16 : ''}`);
             continue;
         }
 
-                if (style === 'gospel') {
-            // GOSPEL SOLEMN & LIN: Arpegii legato curgătoare (fără bătaie de marș) + simboluri de acord
-            const { semi, oct } = getSemitone(base);
-            const root = buildNote(semi - 12, oct);
-            const third = buildNote(semi - (i % 4 === 2 ? 9 : 8), oct);
-            const fifth = buildNote(semi - 5, oct);
-            const seventh = buildNote(semi - (i % 4 === 0 ? 1 : 2), oct);
-            const labels = ['"Cmaj7"', '"C#dim7"', '"Dm7"', '"G7"'];
-            const lbl = i % 2 === 0 ? labels[i % 4] : "";
+        if (style === 'gospel') {
+            const chordSolemn = `[${tenorSixth}${altoThird}${base}]`;
+            const duetWarm = `[${altoThird}${base}]`;
 
             if (dur16 >= 8) {
-                // Doime -> Val arpegiat lin (1+1+1+5) legat cu legato
-                out.push(`${lbl}(${root}1 ${fifth}1 ${seventh}1 ${base}5)`);
+                out.push(`${dyn}(!tenuto!${chordSolemn}6 [${altoThird}${upDiatonic}]2)`);
             } else if (dur16 === 4) {
-                // Pătrime -> Rulare moale (1+1+2) pe timp tare, melodie cantabilă pe timp slab
-                if (i % 2 === 0) {
-                    out.push(`${lbl}(${root}1 ${third}1 ${base}2)`);
-                } else {
-                    out.push(`(${base}3 ${upWhole}1)`);
-                }
+                out.push(isStrongBeat ? `${dyn}!tenuto!${chordSolemn}4` : `!tenuto!${duetWarm}4`);
             } else {
-                out.push(`(${base}2)`);
+                out.push(`${duetWarm}2`);
+            }
+        } else if (style === 'balada') {
+            const duetWarm = `[${altoThird}${base}]`;
+            if (dur16 >= 8) {
+                out.push(`${dyn}(!tenuto![${tenorSixth}${altoThird}${base}]6 ${upDiatonic}2)`);
+            } else if (dur16 === 4) {
+                out.push(isStrongBeat ? `${dyn}!tenuto!${duetWarm}4` : `(${base}3 ${upDiatonic}1)`);
+            } else {
+                out.push(`${base}2`);
             }
         } else if (style === 'jazz') {
+            const { semi, oct } = getSemitone(base);
+            const j7 = buildNote(semi - 10, oct);
+            const j3 = buildNote(semi - 4, oct);
             if (dur16 >= 8) {
-                out.push(`(${base}3 ${upWhole}1 ${base}2 ${downHalf}1 ${nextNote}1)`);
+                out.push(`${dyn}(!tenuto![${j7}${j3}${base}]4 ${upDiatonic}2 ${downDiatonic}1 ${nextNote}1)`);
             } else if (dur16 === 4) {
-                out.push(`(${base}3 ${nextNote}1)`);
+                out.push(isStrongBeat ? `${dyn}!tenuto![${j3}${base}]3 ${nextNote}1` : `(${base}3 ${nextNote}1)`);
             } else {
-                out.push(i % 2 === 1 ? `!>!${base}2` : `${base}2`);
+                out.push(`${base}2`);
             }
         } else if (style === 'blues') {
+            const { semi, oct } = getSemitone(base);
+            const b3 = buildNote(semi + 3, oct);
             if (dur16 >= 8) {
-                out.push(`(!tenuto!${base}4 ${thirdUp}2 ${upWhole}1 ${base}1)`);
+                out.push(`${dyn}(!tenuto![${altoThird}${base}]4 ${b3}2 ${upDiatonic}1 ${base}1)`);
             } else if (dur16 === 4) {
-                out.push(`(!tenuto!${base}3 ${upWhole}1)`);
+                out.push(`(!tenuto!${base}3 ${upDiatonic}1)`);
             } else {
-                out.push(i % 2 === 0 ? `!tenuto!${base}2` : `${base}2`);
+                out.push(`${base}2`);
             }
         } else if (style === 'lautaresc') {
             if (dur16 >= 8) {
-                out.push(`(!trill!${base}4 ${upWhole}1 ${base}1 ${downHalf}1 ${nextNote}1)`);
+                out.push(`${dyn}(!trill!${base}4 ${upDiatonic}1 ${base}1 ${downDiatonic}1 ${nextNote}1)`);
             } else if (dur16 === 4) {
-                out.push(`(!mordent!${base}2 ${upWhole}1 ${base}1)`);
+                out.push(`${dyn}(!mordent!${base}2 ${upDiatonic}1 ${base}1)`);
             } else {
-                out.push(`({${upWhole}}${base}2)`);
+                out.push(`({${upDiatonic}}${base}2)`);
             }
         } else if (style === 'sarbeasca') {
             if (dur16 >= 8) {
-                out.push(`(!lowermordent!${base}3 ${upWhole}1 ${downWhole}1 ${base}3)`);
+                out.push(`${dyn}(!lowermordent!${base}3 ${upDiatonic}1 ${downDiatonic}1 ${base}3)`);
             } else if (dur16 === 4) {
-                out.push(`(${base}1 ${upWhole}3)`);
+                out.push(`(${base}1 ${upDiatonic}3)`);
             } else {
-                out.push(`{${upWhole}}${base}2`);
-            }
-        } else if (style === 'balada') {
-            if (dur16 >= 8) {
-                out.push(`(${base}5 ${upWhole}1 ${base}2)`);
-            } else if (dur16 === 4) {
-                out.push(`(${base}3 ${upWhole}1)`);
-            } else {
-                out.push(`(${base}2)`);
+                out.push(`{${upDiatonic}}${base}2`);
             }
         } else {
             if (dur16 >= 8) {
-                out.push(`(!turn!${base}4 ${upWhole}2 ${base}2)`);
+                out.push(`${dyn}(!turn![${altoThird}${base}]4 ${upDiatonic}2 ${base}2)`);
             } else if (dur16 === 4) {
-                out.push(`(${base}2 ${upWhole}1 ${base}1)`);
+                out.push(isStrongBeat ? `${dyn}!tenuto![${altoThird}${base}]4` : `(${base}2 ${upDiatonic}1 ${base}1)`);
             } else {
                 out.push(`${base}2`);
             }
         }
 
         if (isLast && out.length > 0) {
-            out[out.length - 1] = `!fermata!${out[out.length - 1]}`;
+            out[out.length - 1] = `!p!!fermata!${out[out.length - 1]}`;
         }
     }
-
-    // Grupăm în măsuri de 16 șaisprezecimi și trecem pe RÂND NOU (\n) la fiecare 2 măsuri
-    // Astfel partitura se vede mare, aerisită și ușor de citit pe ecranul telefonului!
     let result = "";
     let count16 = 0;
     let measureCount = 0;
@@ -1391,9 +1356,37 @@ function stylizeMelody(notes, style) {
     if (!result.trim().endsWith("|")) result += "|]";
     return result;
 }
+
 function buildLeftHandBass(notes, style) {
     if (!notes || notes.length === 0) return "z8 | z8 |]";
     const isSlow = style !== 'original';
+    const chromatic = ['C', '^C', 'D', '^D', 'E', 'F', '^F', 'G', '^G', 'A', '^A', 'B'];
+
+    const harmonicBassRoot = {
+        0: 0,   // Do -> Bas Do (Treapta I)
+        2: 7,   // Re -> Bas Sol (Treapta V)
+        4: 0,   // Mi -> Bas Do (Treapta I)
+        5: 5,   // Fa -> Bas Fa (Treapta IV)
+        7: 7,   // Sol -> Bas Sol (Treapta V)
+        9: 9,   // La -> Bas La minor (Treapta vi)
+        11: 7   // Si -> Bas Sol (Treapta V)
+    };
+
+    function formatBassOctave(semi, targetOct) {
+        while (semi < 0) semi += 12;
+        while (semi >= 12) semi -= 12;
+        const baseToken = chromatic[semi];
+        const commas = ','.repeat(Math.max(1, 4 - targetOct));
+        return baseToken + commas;
+    }
+    function getNoteSemi(abc) {
+    const m = abc.match(/^(\^|_)?([A-Ga-g])/);
+    if (!m) return 0;
+    let idx = chromatic.indexOf(m.at(2).toUpperCase());
+    if (m.at(1) === '^') idx += 1;
+    if (m.at(1) === '_') idx -= 1;
+    return (idx + 12) % 12;
+}
     let bassTokens = [];
 
     notes.forEach((n, idx) => {
@@ -1402,39 +1395,46 @@ function buildLeftHandBass(notes, style) {
             bassTokens.push(`z${dur > 1 ? dur : ''}`);
             return;
         }
-        const baseLetter = n.abc.replace(/[\^_,']/g, '').toUpperCase();
-        const fifthMap = { C: 'G,', D: 'A,', E: 'B,', F: 'C', G: 'D', A: 'E', B: 'F' };
-        const fifthNote = fifthMap[baseLetter] || 'G,';
+
+        const melodySemi = getNoteSemi(n.abc);
+        const bassRootSemi = (style === 'gospel' || style === 'balada') && (melodySemi in harmonicBassRoot)
+            ? harmonicBassRoot[melodySemi]
+            : melodySemi;
+
+        const bassOct2 = formatBassOctave(bassRootSemi, 2);
+        const bassOct3 = formatBassOctave(bassRootSemi, 3);
+        const bassFifth = formatBassOctave((bassRootSemi + 7) % 12, 3);
 
         if (!isSlow) {
-            bassTokens.push(`${baseLetter}${dur > 1 ? dur : ''}`);
-        } else if (style === 'gospel' || style === 'balada') {
+            bassTokens.push(`${bassOct3}${dur > 1 ? dur : ''}`);
+        } else if (style === 'gospel') {
             if (dur >= 8) {
-                bassTokens.push(`(${baseLetter}4 ${fifthNote}4)`);
+                bassTokens.push(`!tenuto![${bassOct2}${bassFifth}${bassOct3}]8`);
             } else if (dur === 4) {
-                bassTokens.push(idx % 2 === 0 ? `${baseLetter}4` : `${fifthNote}4`);
+                if (idx % 2 === 0) {
+                    bassTokens.push(`!tenuto![${bassOct2}${bassOct3}]4`);
+                } else {
+                    bassTokens.push(`!tenuto![${bassOct2}${bassFifth}]4`);
+                }
             } else {
-                bassTokens.push(`${baseLetter}2`);
+                bassTokens.push(`!tenuto!${bassOct3}2`);
+            }
+        } else if (style === 'balada') {
+            if (dur >= 8) {
+                bassTokens.push(`(${bassOct2}2 ${bassFifth}2 ${bassOct3}4)`);
+            } else if (dur === 4) {
+                bassTokens.push(idx % 2 === 0 ? `(${bassOct2}2 ${bassFifth}2)` : `!tenuto!${bassOct3}4`);
+            } else {
+                bassTokens.push(`${bassOct3}2`);
             }
         } else if (style === 'jazz' || style === 'blues') {
+            const seventhLow = formatBassOctave((bassRootSemi + 10) % 12, 3);
             if (dur >= 8) {
-                bassTokens.push(`${baseLetter}4 ${fifthNote}4`);
+                bassTokens.push(`(${bassOct2}2 ${bassFifth}2 ${seventhLow}2 ${bassFifth}2)`);
             } else if (dur === 4) {
-                bassTokens.push(idx % 2 === 0 ? `${baseLetter}4` : `${fifthNote}4`);
+                bassTokens.push(idx % 2 === 0 ? `(${bassOct2}2 ${bassFifth}2)` : `(${seventhLow}2 ${bassFifth}2)`);
             } else {
-                bassTokens.push(`${baseLetter}2`);
-            }
-        } else {
-            if (dur >= 8) {
-                bassTokens.push(`[${baseLetter}${fifthNote}]8`);
-            } else if (dur === 4) {
-                bassTokens.push(`${baseLetter}4`);
-            } else {
-                bassTokens.push(`${baseLetter}2`);
-            }
-        }
-    });
-
+                bassTokens.push(`${bassOct3}2`);
     const limit = isSlow ? 16 : 8;
     let res = "";
     let count = 0;
@@ -1451,6 +1451,7 @@ function buildLeftHandBass(notes, style) {
     if (!res.trim().endsWith("|")) res += "|]";
     return res;
 }
+
 function updatePianoScore() {
     const targetKey = document.getElementById('piano-target-key')?.value || 'C';
     const instKey = document.getElementById('piano-instrument')?.value || 'piano';
@@ -1461,40 +1462,43 @@ function updatePianoScore() {
 
     const slowTempos = {
         original: 96,
-        jazz: 72,
-        blues: 62,
-        gospel: 68,
-        lautaresc: 56,
-        sarbeasca: 66,
-        balada: 60,
-        clasic: 66
+        jazz: 70,
+        blues: 60,
+        gospel: 54,
+        lautaresc: 54,
+        sarbeasca: 64,
+        balada: 56,
+        clasic: 62
     };
 
-    const bpm = slowTempos[styleMode] || 64;
+    const bpm = slowTempos[styleMode] || 56;
     const isSlowStyle = styleMode !== 'original';
     const unitLen = isSlowStyle ? "1/16" : "1/8";
-    const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - ARANJAMENT (${bpm} BPM)` : "ORIGINAL";
+    const styleLabel = isSlowStyle ? `${styleMode.toUpperCase()} - CORAL SOLEMN (${bpm} BPM)` : "ORIGINAL";
     const rightHandAbc = stylizeMelody(recordedNotes, styleMode);
 
     let abcString = "";
-    if (instKey === 'piano') {
+    if (instKey === 'piano' && isSlowStyle) {
         const leftHandAbc = buildLeftHandBass(recordedNotes, styleMode);
+        const isSolemnChurch = (styleMode === 'gospel');
         abcString = [
             "X: 1",
             `T: Pian - ${styleLabel} (${targetKey})`,
             "M: 4/4",
             `L: ${unitLen}`,
             `Q: 1/4=${bpm}`,
-                        "%%score {1 | 2}",
+            "%%MIDI nobeataccents",
+            "%%staves {1 2}",
             "V:1 clef=treble",
             "V:2 clef=bass",
             "K: C",
             "V:1",
+            "%%MIDI program 0",
             rightHandAbc,
             "V:2",
+            isSolemnChurch ? "%%MIDI program 48" : "%%MIDI program 0",
             leftHandAbc
         ].join("\n");
-
     } else {
         const clefTag = inst.clef === "bass" ? "clef=bass octave=-1" : "clef=treble";
         abcString = [
@@ -1503,6 +1507,7 @@ function updatePianoScore() {
             "M: 4/4",
             `L: ${unitLen}`,
             `Q: 1/4=${bpm}`,
+            "%%MIDI nobeataccents",
             `K: C ${clefTag}`,
             rightHandAbc
         ].join("\n");
@@ -1762,7 +1767,6 @@ async function toggleMicRecording() {
 
     // 1. Detectăm gama automat
     const detectedKey = detectMusicalKey(capturedMidiSequence);
-
     // 2. Selectăm gama detectată în #piano-target-key
     const targetKeySelect = document.getElementById("piano-target-key");
     if (targetKeySelect) {
