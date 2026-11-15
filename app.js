@@ -1759,7 +1759,7 @@ async function toggleMicRecording() {
     } catch (err) {
       console.error("Eroare microfon:", err);
       if (statusEl) {
-        statusEl.textContent = "❌ Acces refuzat la microfon. Verifică permisiunile (HTTPS).";
+                statusEl.textContent = "❌ Eroare: " + err.name + " - " + err.message;
       }
     }
   } else {
@@ -1801,13 +1801,6 @@ async function toggleMicRecording() {
     updatePianoScore();
   }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  const micBtn = document.getElementById("btn-mic-record");
-  if (micBtn) {
-    micBtn.addEventListener("click", toggleMicRecording);
-  }
-});
 function onRhythmStyleChange(style) {
   const bpmSlider = document.getElementById('gen-bpm');
   const bpmVal = document.getElementById('gen-bpm-val');
