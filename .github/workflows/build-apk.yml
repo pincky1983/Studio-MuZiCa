@@ -29,9 +29,14 @@ jobs:
           rm -rf android www assets
           
           # Reconstruiește folderul public web curat cu fișierele tale actuale
-          mkdir www
+          mkdir -p www/libs
           cp -r * www/ 2>/dev/null || true
           rm -rf www/www www/.github
+          
+          # Descarcă librăriile necesare pentru funcționare 100% OFFLINE
+          curl -L "https://jsdelivr.net" -o www/libs/abcjs-basic-min.js
+          curl -L "https://jsdelivr.net" -o www/libs/abcjs-audio.css
+          curl -L "https://jsdelivr.net" -o www/libs/jspdf.umd.min.js
           
           # Inițializează dependințele npm necesare
           npm init -y
@@ -40,6 +45,10 @@ jobs:
           # Generează structura nativă Android curată de la zero
           npx cap init "Studio Muzical AI" "com.pincky.studiomuzica" --web-dir=www
           npx cap add android
+          
+          # Adaugă permisiunea de Microfon în AndroidManifest.xml
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />|' $MANIFEST
           
           # Generare simplificată și compatibilă pentru pictograma ta personalizată
           if [ -f "icon.png" ]; then
@@ -53,7 +62,6 @@ jobs:
           npx cap sync
           mkdir -p android/app/src/main/res/values
           sed -i 's/@mipmap\/ic_launcher_background/@color\/ic_launcher_background/g' android/app/src/main/res/mipmap-anydpi-v26/*.xml
-
 
       - name: Compilează fișierul APK
         run: |
