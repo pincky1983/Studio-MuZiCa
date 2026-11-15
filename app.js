@@ -1717,7 +1717,8 @@ function processMicAudio() {
 }
 
 // Pornire / Oprire Înregistrare
-async function toggleMicRecording() {
+  async function toggleMicRecording() {
+  alert("Buton apăsat!");
   const btn = document.getElementById("btn-mic-record");
   const statusEl = document.getElementById("mic-status");
 
